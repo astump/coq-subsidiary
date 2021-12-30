@@ -17,12 +17,12 @@ Section Append.
 Variable A : Set.
 Variable eqb : A -> A -> bool.
 
-Definition AppendAlgFi(p : A -> bool)(_ : List A -> Prop)(xs : List A) : Prop :=
+Definition AppendF(p : A -> bool)(_ : List A -> Prop)(xs : List A) : Prop :=
   forall (l : list A)(r : ListF A (List A)),
     span A p xs = (l,r) ->
     fromList xs = l ++ (fromList (inL r)).
 
-Lemma AppendAlgi(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C (AppendAlgFi p) .
+Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C (AppendF p) .
   apply rollAlgi.
   intros R _ _ _ ih xs fxs .
   destruct fxs.

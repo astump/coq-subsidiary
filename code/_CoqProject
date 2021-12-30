@@ -13,3 +13,4 @@ List/ExtraLib.v
 List/Span.v
 List/Rle.v
 List/SpanPfs/Append.v
+List/SpanPfs/GuardPres.v

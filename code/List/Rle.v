@@ -46,7 +46,7 @@ Section RLE.
           match xs with
           | Nil => []
           | Cons hd tl =>
-            let (p,s) := span A R fo (eqb hd) tl in
+            let (p,s) := spanr A R fo (eqb hd) tl in
             let e := (succ (length p), hd) in
                 match s with
                   Nil          => [e]
