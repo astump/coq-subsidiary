@@ -1,0 +1,14 @@
+-arg -impredicative-set
+-R . Subsidiary
+
+Subrec/Kinds.v
+Subrec/CastAlg.v
+Subrec/Functors.v
+Subrec/Mu.v
+Subrec/Mui.v
+Subrec/Init.v
+Subrec/Initi.v
+List/List.v
+List/ExtraLib.v
+List/Span.v
+List/RleAlg.v
