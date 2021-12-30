@@ -1,5 +1,5 @@
-Require Import Init.
-Require Import Initi.
+Require Import Subrec.
+Require Import Subreci.
 Require Import Kinds.
 Require Import Mu.
 Require Import List.
@@ -46,7 +46,7 @@ Section RLE.
           match xs with
           | Nil => []
           | Cons hd tl =>
-            let (p,s) := fo (SpanF A) (SpanFunctor A) (SpanAlg A (eqb hd) R) tl in
+            let (p,s) := span A R fo (eqb hd) tl in
             let e := (succ (length p), hd) in
                 match s with
                   Nil          => [e]

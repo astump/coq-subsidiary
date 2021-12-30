@@ -9,11 +9,10 @@ _CoqProject: ;
 Makefile: ;
 
 clean:
-	@rm -f *.vo   &
-	@rm -f *.glob &
-	@rm -f .*.aux  &
-	@rm -f *.vok  &
-	@rm -f *.vos &
+	@rm -f */*.vo   &
+	@rm -f */*.glob &
+	@rm -f */*.vok  &
+	@rm -f */*.vos &
 	@rm -f Makefile.coq &
 	@rm -f Makefile.coq.conf &
 	@rm -f .Makefile.coq.d &

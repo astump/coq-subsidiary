@@ -1,6 +1,6 @@
 
-Require Import Init.
-Require Import Initi.
+Require Import Subrec.
+Require Import Subreci.
 Require Import Kinds.
 Require Import Functors.
 Require Import Mu.
@@ -63,7 +63,7 @@ Section List.
       | (hd :: tl) => Cons hd tl
       end.
   
-  Definition List := @Init ListF .
+  Definition List := @Subrec ListF .
 
   Definition ListOut : List -> ListF List := @out ListF FunListF .
 
@@ -71,7 +71,7 @@ Section List.
   (* Smart constructors for List as Initial Carrier. *)
   (* -------------------------------------------------------------------------------- *)
 
-  Definition inL : ListF List -> List := inInit ListF.
+  Definition inL : ListF List -> List := inn ListF.
   Definition prenil : forall (R S : Set), (ListF R -> S) -> S :=
     fun R S f => f Nil.
   
@@ -109,7 +109,7 @@ Section List.
   (* (list A) => List A injection                                                     *)
   (* -------------------------------------------------------------------------------- *)
 
-  Definition toList (xs : list A) : List := listFold xs List (inInit ListF).
+  Definition toList (xs : list A) : List := listFold xs List (inn ListF).
   Definition fromList : List -> list A :=
     fold ListF (Const (list A)) (FunConst (list A))
          (rollAlg ListF (fun R reveal fo out eval fr => listIn (fmap eval fr))) .
@@ -212,8 +212,8 @@ Section List.
     FiMap := ListFiMap;
     }.
 
-  Definition Listi := Initi ListF ListFi.
-  Definition toListi(xs : list A) : Listi (toList xs) := listFoldi xs Listi (inIniti depList).
+  Definition Listi := Subreci ListF ListFi.
+  Definition toListi(xs : list A) : Listi (toList xs) := listFoldi xs Listi (inni depList).
   Definition listAlgi := Algi ListF ListFi.
 
 End List.

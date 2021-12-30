@@ -5,7 +5,7 @@ Require Import Functors.
 
 Require Import Coq.Logic.FunctionalExtensionality.
 
-Section Init.
+Section Subrec.
   
 (* -------------------------------------------------------------------------------- *)
 (* Assumptions *)
@@ -79,43 +79,39 @@ Definition antiAlg : forall {A B : Set} {X : Set -> Set}, (A -> B) -> (Alg B X) 
             ).
   
 
-(* -------------------------------------------------------------------------------- *)
-(* building Init, our initial algebra carrier *)
-(* -------------------------------------------------------------------------------- *)
-
-Definition InitF(C : Set) := forall (X : Set -> Set) (FunX : Functor X), Alg C X -> X C.
-Definition Init := Mu InitF.
+Definition SubrecF(C : Set) := forall (X : Set -> Set) (FunX : Functor X), Alg C X -> X C.
+Definition Subrec := Mu SubrecF.
     
-Instance initFunc : Functor InitF :=
+Instance SubrecFunctor : Functor SubrecF :=
   {
   fmap := fun A B f initA => fun X xmap alg => fmap f (initA X xmap (antiAlg f alg));
   }.
   
-Definition rollInit: InitF Init -> Init :=
-  inMu InitF.
+Definition roll: SubrecF Subrec -> Subrec :=
+  inMu SubrecF.
 
-Definition unrollInit: Init -> InitF Init :=
-  outMu (FunF := initFunc) InitF.
+Definition unroll: Subrec -> SubrecF Subrec :=
+  outMu (FunF := SubrecFunctor) SubrecF.
 
 (* -------------------------------------------------------------------------------- *)
 (* 
-   We want to build inInit : F Init -> Init.
-   to build inInit, we need to build concretizations of its abst. functions:
+   We want to build inSubrec : F Subrec -> Subrec.
+   to build inSubrec, we need to build concretizations of its abst. functions:
    - toT, fold, sfold, out.
    - promote is needed to write sfold.
 *)
 (* -------------------------------------------------------------------------------- *)  
 
-Definition fold : FoldT Alg Init := fun X FunX alg d => unrollInit d X FunX alg.
+Definition fold : FoldT Alg Subrec := fun X FunX alg d => unroll d X FunX alg.
 
-Definition out : Init -> F Init :=
+Definition out : Subrec -> F Subrec :=
   fold F FunF (rollAlg (fun _ _ _ _ _ d => d)).
 
-Definition inInit : F Init -> Init :=
-  fun d => rollInit (fun X xmap alg =>
-                    unrollAlg alg Init (fun x => x) fold out (fold X xmap alg) d).
+Definition inn : F Subrec -> Subrec :=
+  fun d => roll (fun X xmap alg =>
+                    unrollAlg alg Subrec (fun x => x) fold out (fold X xmap alg) d).
   
-End Init.
+End Subrec.
 
 
 

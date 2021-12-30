@@ -6,9 +6,10 @@ Subrec/CastAlg.v
 Subrec/Functors.v
 Subrec/Mu.v
 Subrec/Mui.v
-Subrec/Init.v
-Subrec/Initi.v
+Subrec/Subrec.v
+Subrec/Subreci.v
 List/List.v
 List/ExtraLib.v
 List/Span.v
-List/RleAlg.v
+List/Rle.v
+List/SpanPfs/Append.v

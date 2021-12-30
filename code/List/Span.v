@@ -1,34 +1,20 @@
-Require Import Init.
-Require Import Initi.
+(* similar to span from Haskell's Data.List, but written as an Alg *)
+
+Require Import Subrec.
 Require Import Kinds.
-Require Import Mu.
-Require Import List.
 Require Import Functors.
+Require Import List.List.
 
 Require Import Coq.Lists.List.
 Require Import Coq.Init.Nat.
-Require Import Plus.
-Require Import Le.
-
-Require Import Coq.Logic.FunctionalExtensionality.
-
 
 Import ListNotations.
-
 
 Section Span.
 
   Variable A : Set.
-  (* Bool equality *)
   Variable eqb : A -> A -> bool.
-  (* propositional equality *)
-  Variable eq : forall a1 a2, eqb a1 a2 = true -> a1 = a2.
     
-  
-  (* -------------------------------------------------------------------------------- *)
-  (* Collect *)
-  (* -------------------------------------------------------------------------------- *)
-
   Definition SpanF(X : Set) : Set := ((list A) * ListF A X).
   Global Instance SpanFunctor : Functor SpanF :=
     {fmap X Y f c :=
@@ -50,13 +36,16 @@ Section Span.
               (nil,xs)
          end).
 
-  Definition span(p : A -> bool)(xs : List A) : (list A * List A)
-    := let (l,r) := fold (ListF A) SpanF SpanFunctor (SpanAlg p (List A)) xs in
-         (l,inL r).
+  Definition spanr(R : Set)(fo:FoldT (Alg (ListF A)) R)
+                 (p : A -> bool)(xs : R) : (list A * ListF A R)
+    := fo SpanF SpanFunctor (SpanAlg p R) xs.
+
+  Definition span(p : A -> bool)(xs : List A) : (list A * ListF A (List A))
+    := fold (ListF A) SpanF SpanFunctor (SpanAlg p (List A)) xs.
 
   Definition spanl(p : A -> bool)(xs : list A) : (list A * list A) :=
     let (l,r) := span p (toList xs) in
-      (l, fromList r).
+      (l, fromList (inL r)).
 
 End Span.
 
