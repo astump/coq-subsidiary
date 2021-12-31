@@ -101,12 +101,6 @@ Section RLE.
       repeat n x ++ (fromList (inL l)) = repeat k x ++ fromList xs
       /\ ListFi A S (inL l).
 
-  Lemma hopRepeat : forall (n : nat)(a : A)(xs : list A),
-      a :: repeat n a ++ xs = repeat n a ++ a :: xs.
-    intros. induction n; simpl.
-    - reflexivity.
-    - rewrite IHn. reflexivity.
-  Qed.
 
   Lemma repeatCollect
         (S : kMo (ListF A))
