@@ -8,12 +8,12 @@ Require Import List.Repeat.
 Import ListNotations.
 
 Section Rld.
-Variable A : Set.
+Context {A : Set}.
 
 Fixpoint rld(xs : list (nat * A)) : list A :=
   match xs with
   | [] => []
-  | (n, v) :: tl => repeat A n v ++ rld tl
+  | (n, v) :: tl => repeat n v ++ rld tl
   end.
 
 End Rld.

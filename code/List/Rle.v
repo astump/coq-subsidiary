@@ -10,9 +10,13 @@ Require Import Coq.Init.Nat.
 Require Import Plus.
 Require Import Le.
 
-Require Import Coq.Logic.FunctionalExtensionality.
+Require Import List.ExtraLib.
+Require Import List.Repeat.
+Require Import Rld.
 
 Require Import Span.
+Require Import SpanPfs.Append.
+Require Import SpanPfs.Forall.
 Require Import SpanPfs.GuardPres.
 
 Import ListNotations.
@@ -57,22 +61,6 @@ Section RLE.
   Definition rle(xs : List A) : list (nat * A)
     := @fold (ListF A) RleCarr (FunConst (list (nat * A))) RleAlg xs.
 
-  (* -------------------------------------------------------------------------------- *)
-  (* Run-Length decode *)
-  (* -------------------------------------------------------------------------------- *)
-    
-  Fixpoint repeat(count : nat) (v : A) : list A :=
-    match count with
-    | 0   => []
-    | S n =>  v :: (repeat n v)
-    end.
-
-  Fixpoint rld(xs : list (nat * A)) : list A :=
-    match xs with
-    | [] => []
-    | (n, v) :: tl => repeat n v ++ rld tl
-    end.
-
   Lemma rldTackOn(a : A)(xs : list (nat * A)) :
                  rld (tackOn a xs) = a :: rld xs.
   case xs as [|h t]; simpl.
@@ -90,163 +78,35 @@ Section RLE.
                   (fun X xs => rld (rle xs) = fromList xs)
         ).
     simpl in ind; rewrite (inj A xs) in ind.
-    apply ind. apply constimap.
+    apply ind. apply FunConsti.
     apply rollAlgi; unfold AlgF.
     intros R _ fo _ ih d fd.
     destruct fd.
     - reflexivity.
     - change (fromList (consInit A h t)) with (h :: fromList t). 
       simpl'.
-      fold (List A) in *.
+      change (fold (ListF A) RleCarr (FunConst (list (nat * A))) RleAlg) with rle.
       destruct (spanr A (Subrec.Subrec (ListF A)) (fold (ListF A)) (eqb h) t) as (l,r) eqn:e.
       set (sg := guardPres A R fo (eqb h) t H l r e).
-      inversion sg.
-      -- change r with (outList A (inList r)).
-      set (rc := repeatCollect R fo out t H h 1 n l co ).
-      destruct rc as [rc1 rc2].
-      destruct l as [| a l].
-      + assumption.
-      + change (fromList (inL (Cons a l))) with (a :: fromList l) in rc1.
-        change (listIn A (Cons h (fromList t))) with (h :: fromList t).
-        change (repeat 1 h ++ fromList t) with (h :: fromList t) in rc1.
-        rewrite <- rc1.
-        change (rld ((n,h) :: tackOn a (rle l))) with (repeat n h ++ rld (tackOn a (rle l))).
-        rewrite (rldTackOn a (rle l)).
-        rewrite (ih l).
-        * reflexivity.
-        * inversion rc2.
-          ** contradiction (nilCons A a l H0).
-          ** destruct (consCons A h0 a t0 l H1) as [_ e].
-             rewrite e in H0.
-             assumption.
+      rewrite (append A R fo (eqb h) t H l r e).
+      set (sf := spanForall A R fo (eqb h) t H l r e).
+      set (uu := Foralleqb eqb eq h l sf).
+      destruct r.
+      -- simpl'.
+         rewrite <- uu.
+         reflexivity.
+      -- inversion sg.
+      --- contradiction (nilCons A a s H0).
+      --- destruct (consCons A h0 a t0 s H1) as (_, q); clear H1.
+          rewrite q in H0; clear q.
+          change (fromList (inList (Cons a s))) with (a :: fromList s).
+          simpl'.
+          rewrite (rldTackOn a (rle s)).
+          rewrite (ih s H0).
+          rewrite <- uu.
+          reflexivity.
     - exact (toListi _ xs).
     Qed.
-
-(*
-  (* -------------------------------------------------------------------------------- *)
-  (* Helper tactics *)  
-  (* -------------------------------------------------------------------------------- *)
-  Ltac foldCollect :=
-    change (fold (ListF A) CollectF FunCollectF (CollectAlg ?x ?T) ?tl ?n)
-    with
-      (collect x tl n).
-
-  Ltac foldRle :=
-    change (fold ?F ?Carr ?FuNCarr RleAlg ?xs) with (rle xs).
-  
-  (* -------------------------------------------------------------------------------- *)
-  (* Theorems (rle) *)  
-  (* -------------------------------------------------------------------------------- *)
-
-  Definition repeatCollectP (S : kMo (ListF A))(xs : List A) : Prop :=
-    forall (x : A)
-           (k n : nat)
-           (l : ListF A (List A)),
-      let p := collect x xs k in
-      p = (n, l) ->
-      repeat n x ++ (fromList (inL l)) = repeat k x ++ fromList xs
-      /\ ListFi A S (inL l).
-
-
-  Lemma repeatCollect
-        (S : kMo (ListF A))
-        (fo : forall d : List A, FoldTi (ListF A) (Algi (ListF A) (ListFi A)) S d)
-        (out : forall d : Init (ListF A), S d -> ListFi A S d)
-    : forall (xs : List A)
-             (Rxs : S xs),
-        repeatCollectP S xs.
-    intros xs Sxs x k n l.
-    apply (fo xs
-               (fun X xs => repeatCollectP S xs)).
-    + apply constimap.
-    + apply rollAlgi. unfold AlgF.
-    intros R reveal _ _ _ ih d fd.
-    destruct fd as [| hd tl Rtl].
-    - unfold repeatCollectP ; intros.
-      simpl in H.
-      inversion H.
-      apply conj.
-      -- reflexivity.
-      -- apply nilFi.
-    - unfold repeatCollectP.
-      intros x0 k0 n0 l0.
-      simpl'; destruct (eqb hd x0) eqn:u1.
-      -- foldCollect.
-         intro u2.
-         assert (ihtl := ih tl Rtl); clear ih.
-         unfold repeatCollectP in ihtl.      
-         destruct (collect x0 tl (succ k0)) eqn:e1.
-         destruct l1; inversion u2 as [(q0,q1)]; clear u2 q1.
-         --- assert (ihtl2 := ihtl x0 (succ k0) n1 Nil e1); clear ihtl.
-             destruct ihtl2 as [ihtl2a ihtl2b].
-             rewrite q0 in ihtl2a.
-             change (fromList (inL Nil)) with (nil (A:=A)) in ihtl2a. 
-             change (listIn A Nil) with (nil (A:=A)).   
-             rewrite ihtl2a.
-             simpl.
-             change (toT (ListF A) tl) with (fromList tl).
-             rewrite (eq hd x0 u1).
-             apply conj.
-             ---- apply hopRepeat.
-             ---- assumption.
-         --- rewrite q0 in e1; clear q0.
-             rewrite (eq hd x0 u1); clear u1.
-             assert (ihtl2 := ihtl x0 (succ k0) n0 (Cons a i) e1); clear ihtl.
-             change (listIn A (Cons a (toT (ListF A) i))) with (fromList (inL (Cons a i))).
-             destruct ihtl2 as [ihtl2a ihtl2b].
-             rewrite ihtl2a.
-             simpl.
-             apply conj.
-             ---- apply hopRepeat.             
-             ---- apply ihtl2b.
-      -- intro u2; inversion u2 as [(q0,q1)]; clear u2 q0 q1.
-         clear u1.
-         apply conj.
-         --- reflexivity.
-         --- apply consFi.
-             apply reveal.
-             assumption.
-    + exact Sxs.
-  Qed.
-
-  Theorem RldRle : forall (xs : list A), rld (rle (toList xs)) = xs.
-    intros xs.
-    set (ind := foi (toList xs)
-                    (fun X xs => rld (rle xs) = fromList xs)
-        ).
-    simpl in ind; rewrite (inj A xs) in ind.
-    apply ind. apply constimap.
-    apply rollAlgi; unfold AlgF.
-    intros R rev fo sfo out ih d H.
-    destruct H.
-    - reflexivity.
-    - fold (List A) in *.
-      simpl'.
-      change (toT (ListF A) t) with (fromList t).
-      foldCollect.
-      foldRle.
-      destruct (collect h t 1) eqn:co.
-      Check repeatCollect.
-      set (rc := repeatCollect R fo out t H h 1 n l co).
-      destruct rc as [rc1 rc2].
-      destruct l as [| a l].
-      + assumption.
-      + change (fromList (inL (Cons a l))) with (a :: fromList l) in rc1.
-        change (listIn A (Cons h (fromList t))) with (h :: fromList t).
-        change (repeat 1 h ++ fromList t) with (h :: fromList t) in rc1.
-        rewrite <- rc1.
-        change (rld ((n,h) :: tackOn a (rle l))) with (repeat n h ++ rld (tackOn a (rle l))).
-        rewrite (rldTackOn a (rle l)).
-        rewrite (ih l).
-        * reflexivity.
-        * inversion rc2.
-          ** contradiction (nilCons A a l H0).
-          ** destruct (consCons A h0 a t0 l H1) as [_ e].
-             rewrite e in H0.
-             assumption.
-    - exact (toListi _ xs).
-    Qed.
-*)
 
 End RLE.
 

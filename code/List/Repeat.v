@@ -6,7 +6,7 @@ Require Import Le.
 Import ListNotations.
 
 Section Repeat.
-Variable A : Set.
+Context {A : Set}.
 
 Fixpoint repeat(count : nat) (v : A) : list A :=
   match count with

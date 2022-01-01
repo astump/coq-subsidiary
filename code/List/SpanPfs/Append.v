@@ -17,12 +17,12 @@ Section Append.
 Variable A : Set.
 Variable eqb : A -> A -> bool.
 
-Definition AppendF(p : A -> bool)(_ : List A -> Prop)(xs : List A) : Prop :=
+Definition AppendF(p : A -> bool)(xs : List A) : Prop :=
   forall (l : list A)(r : ListF A (List A)),
     span A p xs = (l,r) ->
     fromList xs = l ++ (fromList (inList r)).
 
-Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C (AppendF p) .
+Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C (Consti (AppendF p)) .
   apply rollAlgi.
   intros R _ _ _ ih xs fxs .
   destruct fxs.
@@ -54,5 +54,9 @@ Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C 
        rewrite <- u2.
        reflexivity.
 Qed.
+
+Definition append(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) (ListFi A)) R d)
+           (p : A -> bool)(xs : List A)(rxs : R xs) : AppendF p xs :=
+  foi xs (Consti (AppendF p)) (FunConsti (AppendF p)) (Append p R) rxs.
 
 End Append.

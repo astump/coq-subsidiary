@@ -49,12 +49,12 @@ Definition rle(xs:list A) : list (nat * A) := rleh xs None.
 Definition expand(e : option(nat * A)) : list A :=
   match e with
     None => []
-  | Some (n,a) => repeat A n a
+  | Some (n,a) => repeat n a
   end.
 
 Theorem rleRld(xs : list A) :
   forall(e : option (nat * A)),
-    rld A (rleh xs e) = expand e ++ xs.
+    rld (rleh xs e) = expand e ++ xs.
   induction xs; intro e.
   + simpl.
     destruct e as [(n,a)|]; reflexivity.
@@ -63,7 +63,7 @@ Theorem rleRld(xs : list A) :
        destruct (eqb a a') eqn:u.
        +++ rewrite (IHxs (Some (S n,a'))).
            simpl.
-           rewrite (hopRepeat A n a' xs).
+           rewrite (hopRepeat n a' xs).
            rewrite (eq a a' u).
            reflexivity.
        +++ simpl.
@@ -77,8 +77,8 @@ Theorem rleRld(xs : list A) :
 Qed.
 
 Theorem rleRepeat(a : A)(n : nat) :
-  rleh (repeat A (S n) a) None = [(S n,a)] /\
-  forall k : nat , rleh (repeat A n a) (Some (k,a)) = [(k+n,a)].
+  rleh (repeat (S n) a) None = [(S n,a)] /\
+  forall k : nat , rleh (repeat n a) (Some (k,a)) = [(k+n,a)].
 induction n.
 + simpl.
   apply conj.

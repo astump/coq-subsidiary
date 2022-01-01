@@ -33,7 +33,7 @@ Section Subreci.
 (* -------------------------------------------------------------------------------- *)
 
   Definition Consti(R: kMo) : kMo -> kMo := fun _ d => R d.
-  Definition constimap(R : kMo) : fmapiT Subrec (Consti R) :=
+  Definition FunConsti(R : kMo) : fmapiT Subrec (Consti R) :=
     fun A B f i xs => xs.
 
 (* -------------------------------------------------------------------------------- *)
@@ -122,7 +122,7 @@ End Subreci.
 (* Make F implicit for all terms after Subrec decl. *)
 Arguments foldi {F} {Fi}.
 Arguments Consti {F}.
-Arguments constimap {F}.
+Arguments FunConsti {F}.
 Arguments rollAlgi {F} {Fi}.
 Arguments unrollAlgi {F} {Fi}.
 Arguments rolli {F} {Fi}.

@@ -23,7 +23,7 @@ Variable eqb : A -> A -> bool.
 Lemma Repeat(p : A -> bool)(a : A) :
             p a = true ->
             forall(n : nat),
-              span A p (toList (repeat A n a)) = (repeat A n a, Nil).
+              span A p (toList (repeat n a)) = (repeat n a, Nil).
   intro pa.
   induction n.
   ++ reflexivity.

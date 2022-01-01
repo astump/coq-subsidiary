@@ -13,8 +13,9 @@ List/ExtraLib.v
 List/Span.v
 List/Repeat.v
 List/Rld.v
-List/Rle.v
-List/RleSingleRec.v
 List/SpanPfs/Append.v
+List/SpanPfs/Forall.v
 List/SpanPfs/GuardPres.v
 List/SpanPfs/Repeat.v
+List/Rle.v
+List/RleSingleRec.v
