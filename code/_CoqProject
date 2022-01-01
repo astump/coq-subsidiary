@@ -10,8 +10,8 @@ Subrec/Subrec.v
 Subrec/Subreci.v
 List/List.v
 List/ExtraLib.v
+List/PairwiseDistinct.v
 List/Span.v
-List/Repeat.v
 List/Rld.v
 List/SpanPfs/Append.v
 List/SpanPfs/Forall.v

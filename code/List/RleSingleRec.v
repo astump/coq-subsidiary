@@ -12,7 +12,7 @@ Require Import Coq.Init.Nat.
 Require Import Plus.
 Require Import Le.
 
-Require Import List.Repeat.
+Require Import ExtraLib.
 Require Import Rld.
 
 Require Import Coq.Logic.FunctionalExtensionality.
@@ -49,7 +49,7 @@ Definition rle(xs:list A) : list (nat * A) := rleh xs None.
 Definition expand(e : option(nat * A)) : list A :=
   match e with
     None => []
-  | Some (n,a) => repeat n a
+  | Some (n,a) => repeat a n
   end.
 
 Theorem rleRld(xs : list A) :
@@ -77,8 +77,8 @@ Theorem rleRld(xs : list A) :
 Qed.
 
 Theorem rleRepeat(a : A)(n : nat) :
-  rleh (repeat (S n) a) None = [(S n,a)] /\
-  forall k : nat , rleh (repeat n a) (Some (k,a)) = [(k+n,a)].
+  rleh (repeat a (S n)) None = [(S n,a)] /\
+  forall k : nat , rleh (repeat a n) (Some (k,a)) = [(k+n,a)].
 induction n.
 + simpl.
   apply conj.
@@ -98,6 +98,8 @@ induction n.
      rewrite (plus_Snm_nSm k n).
      reflexivity.
 Qed.
+
+(*Theorem rleDistinct(xs : list A)*)
 
 End RLE.
 

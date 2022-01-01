@@ -11,13 +11,13 @@ Require Import Plus.
 Require Import Le.
 
 Require Import List.ExtraLib.
-Require Import List.Repeat.
 Require Import Rld.
 
 Require Import Span.
 Require Import SpanPfs.Append.
 Require Import SpanPfs.Forall.
 Require Import SpanPfs.GuardPres.
+Require Import SpanPfs.Repeat.
 
 Import ListNotations.
 
@@ -27,6 +27,7 @@ Section RLE.
   Variable A : Set.
   Variable eqb : A -> A -> bool.
   Variable eq : forall a1 a2, eqb a1 a2 = true -> a1 = a2.
+  Variable eqRefl : forall a , eqb a a = true.
 
     
   (* -------------------------------------------------------------------------------- *)
@@ -50,7 +51,7 @@ Section RLE.
           match xs with
           | Nil => []
           | Cons hd tl =>
-            let (p,s) := spanr A R fo (eqb hd) tl in
+            let (p,s) := spanr fo (eqb hd) tl in
             let e := (succ (length p), hd) in
                 match s with
                   Nil          => [e]
@@ -63,50 +64,49 @@ Section RLE.
 
   Lemma rldTackOn(a : A)(xs : list (nat * A)) :
                  rld (tackOn a xs) = a :: rld xs.
-  case xs as [|h t]; simpl.
-  + reflexivity.
-  + destruct h as [n a'].
-    destruct (eqb a a') eqn:e.    
-    - rewrite (eq a a' e).
-      reflexivity.
-    - reflexivity.
+  case xs as [|h t]; simpl; trivial.
+  destruct h as [n a'].
+  destruct (eqb a a') eqn:e; trivial.
+  rewrite (eq a a' e).
+  trivial.
   Qed.
 
   Theorem RldRle : forall (xs : list A), rld (rle (toList xs)) = xs.
     intros xs.
-    set (ind := foldi (Fi := ListFi A) (toList xs)
-                  (fun X xs => rld (rle xs) = fromList xs)
-        ).
-    simpl in ind; rewrite (inj A xs) in ind.
-    apply ind. apply FunConsti.
-    apply rollAlgi; unfold AlgF.
-    intros R _ fo _ ih d fd.
-    destruct fd.
-    - reflexivity.
+    listInd (fun (X : List A -> Prop) xs => rld (rle xs) = fromList xs) xs; trivial.
     - change (fromList (consInit A h t)) with (h :: fromList t). 
       simpl'.
       change (fold (ListF A) RleCarr (FunConst (list (nat * A))) RleAlg) with rle.
-      destruct (spanr A (Subrec.Subrec (ListF A)) (fold (ListF A)) (eqb h) t) as (l,r) eqn:e.
-      set (sg := guardPres A R fo (eqb h) t H l r e).
-      rewrite (append A R fo (eqb h) t H l r e).
+      destruct (spanr (fold (ListF A)) (eqb h) t) as (l,r) eqn:e.
+      rewrite (append fo (eqb h) t H e).
       set (sf := spanForall A R fo (eqb h) t H l r e).
       set (uu := Foralleqb eqb eq h l sf).
-      destruct r.
+      destruct r as [|h' t'].
       -- simpl'.
          rewrite <- uu.
-         reflexivity.
-      -- inversion sg.
-      --- contradiction (nilCons A a s H0).
-      --- destruct (consCons A h0 a t0 s H1) as (_, q); clear H1.
-          rewrite q in H0; clear q.
-          change (fromList (inList (Cons a s))) with (a :: fromList s).
+         trivial.
+      -- set (sg := guardPres fo (eqb h) t H e).
+         inversion sg as [e'|h'' t'' rt'' e'].
+      --- contradiction (nilCons e').
+      --- destruct (consCons e') as (_, q).
+          rewrite q in rt''; clear q.
+          change (fromList (inList (Cons h' t'))) with (h' :: fromList t').
           simpl'.
-          rewrite (rldTackOn a (rle s)).
-          rewrite (ih s H0).
+          rewrite (rldTackOn h' (rle t')).
+          rewrite (ih t' rt'').
           rewrite <- uu.
-          reflexivity.
+          trivial.
     - exact (toListi _ xs).
     Qed.
+
+Theorem RleRepeat(a : A)(n : nat) :
+    rle (toList (repeat a (S n))) = [(S n,a)].
+  simpl'.  
+  change (listFold (repeat a n) (inn (ListF A))) with (toList (repeat a n)).
+  rewrite (Repeat A (eqb a) a (eqRefl a) n).
+  rewrite (repeat_length a n).
+  trivial.
+Qed.
 
 End RLE.
 

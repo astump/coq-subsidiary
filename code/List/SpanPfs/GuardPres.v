@@ -21,7 +21,7 @@ Variable eqb : A -> A -> bool.
 Definition GuardPresF(p : A -> bool)(S : List A -> Prop)(xs : List A) : Prop :=
   forall (l : list A)(r : ListF A (List A)),
     span A p xs = (l,r) ->
-    ListFi A S (inList r).
+    ListFi S (inList r).
 
 Lemma GuardPresFuni(p : A -> bool) : fmapiT (List A) (GuardPresF p).
   intros X Y f xs gxs l r u.
@@ -31,7 +31,7 @@ Lemma GuardPresFuni(p : A -> bool) : fmapiT (List A) (GuardPresF p).
     auto.
 Qed.
 
-Lemma GuardPres(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) S (GuardPresF p) .
+Lemma GuardPres(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) ListFi S (GuardPresF p) .
   apply rollAlgi.
   intros R _ _ _ ih xs fxs .
   destruct fxs.
@@ -50,8 +50,8 @@ Lemma GuardPres(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) (ListFi A)
        +++ apply consFi.
            set (q := ih t H l0 (Cons a s) e2).
            inversion q.
-           ++++ destruct (nilCons A a s H0).
-           ++++ destruct (consCons A h0 a t0 s H1).
+           ++++ destruct (nilCons H0).
+           ++++ destruct (consCons H1).
                 rewrite <- H3.
                 assumption.
     ++ simpl'.
@@ -62,8 +62,10 @@ Lemma GuardPres(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) (ListFi A)
        assumption.
 Qed.
 
-Definition guardPres(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) (ListFi A)) R d)
+Definition guardPres(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
                     (p : A -> bool)(xs : List A)(rxs : R xs) : GuardPresF p R xs
  := foi xs (GuardPresF p) (GuardPresFuni p) (GuardPres p R) rxs.
 
 End GuardPres.
+
+Arguments guardPres {A} {R} foi p xs rxs {l} {r} e.

@@ -22,7 +22,7 @@ Definition AppendF(p : A -> bool)(xs : List A) : Prop :=
     span A p xs = (l,r) ->
     fromList xs = l ++ (fromList (inList r)).
 
-Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C (Consti (AppendF p)) .
+Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (AppendF p)) .
   apply rollAlgi.
   intros R _ _ _ ih xs fxs .
   destruct fxs.
@@ -55,8 +55,10 @@ Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C 
        reflexivity.
 Qed.
 
-Definition append(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) (ListFi A)) R d)
+Definition append(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
            (p : A -> bool)(xs : List A)(rxs : R xs) : AppendF p xs :=
   foi xs (Consti (AppendF p)) (FunConsti (AppendF p)) (Append p R) rxs.
 
 End Append.
+
+Arguments append{A}{R} foi p xs rxs {l}{r} e.

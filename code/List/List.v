@@ -44,10 +44,10 @@ Section List.
   (* Building IndInj typeclass for ListF. *)
   (* -------------------------------------------------------------------------------- *)
 
-  Fixpoint listFold(l : list A)(X : Set)(alg : ListF X -> X) : X :=
+  Fixpoint listFold(l : list A){X : Set}(alg : ListF X -> X) : X :=
   match l with
     nil => alg Nil
-  | cons hd tl => alg (Cons hd (listFold tl X alg))
+  | cons hd tl => alg (Cons hd (listFold tl alg))
   end.
 
   Definition listIn(d : ListF (list A)) : list A :=
@@ -110,7 +110,7 @@ Section List.
   (* (list A) => List A injection                                                     *)
   (* -------------------------------------------------------------------------------- *)
 
-  Definition toList (xs : list A) : List := listFold xs List (inn ListF).
+  Definition toList (xs : list A) : List := listFold xs (inn ListF).
   Definition fromList : List -> list A :=
     fold ListF (Const (list A)) (FunConst (list A))
          (rollAlg ListF (fun R reveal fo out eval fr => listIn (fmap eval fr))) .
@@ -226,9 +226,22 @@ Arguments inList {A}.
 Arguments toList {A} xs.
 Arguments fromList {A} xs.
 Arguments canonList {A} xs.
+Arguments inj{A} xs.
+
+Arguments ListFi {A} R xs.
 
 Arguments ForaL {A} P l.
 
 Definition ex  : list nat := [1 ; 2 ; 3 ; 4 ; 5 ; 6].
 Definition ex' : List nat := (toList ex).
 
+(* prove P (toList xs) using Subreci for lists *)
+Ltac listInd P xs :=
+  let ind := fresh "ind" in
+    set (ind := foldi (Fi := ListFi) (toList xs) P);
+    simpl in ind; try (rewrite (inj xs) in ind);
+    apply ind; clear ind; [apply FunConsti | apply rollAlgi; intros R reveal fo out ih d fd; destruct fd | idtac].
+
+Arguments nilCons{A}{h}{t} e.
+Arguments consCons{A}{h1}{h2}{t1}{t2} e.
+Arguments listFold{A} l {X} alg.

@@ -13,8 +13,6 @@ Require Import Coq.Init.Nat.
 
 Import ListNotations.
 
-Require Import List.Repeat.
-
 Section Repeat.
 
 Variable A : Set.
@@ -23,14 +21,13 @@ Variable eqb : A -> A -> bool.
 Lemma Repeat(p : A -> bool)(a : A) :
             p a = true ->
             forall(n : nat),
-              span A p (toList (repeat n a)) = (repeat n a, Nil).
+              spanr (fold (ListF A)) p (toList (repeat a n)) = (repeat a n, Nil).
   intro pa.
-  induction n.
-  ++ reflexivity.
-  ++ simpl'; rewrite pa.
-     unfold span , toList in IHn.
-     rewrite IHn.
-     reflexivity.
+  induction n; trivial.
+  + unfold spanr. simpl'. rewrite pa.
+    unfold spanr , toList in IHn.
+    rewrite IHn.
+    trivial.
 Qed.
 
 

@@ -36,7 +36,7 @@ Section Span.
               (nil,xs)
          end).
 
-  Definition spanr(R : Set)(fo:FoldT (Alg (ListF A)) R)
+  Definition spanr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                  (p : A -> bool)(xs : R) : (list A * ListF A R)
     := fo SpanF SpanFunctor (SpanAlg p R) xs.
 
@@ -48,6 +48,8 @@ Section Span.
       (l, fromList (inList r)).
 
 End Span.
+
+Arguments spanr{A}{R}fo p xs.
 
 (* testcases *)
 
