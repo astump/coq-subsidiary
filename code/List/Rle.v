@@ -13,6 +13,7 @@ Require Import Le.
 Require Import Coq.Logic.FunctionalExtensionality.
 
 Require Import Span.
+Require Import SpanPfs.GuardPres.
 
 Import ListNotations.
 
@@ -20,10 +21,9 @@ Import ListNotations.
 Section RLE.
 
   Variable A : Set.
-  (* Bool equality *)
   Variable eqb : A -> A -> bool.
-  (* propositional equality *)
   Variable eq : forall a1 a2, eqb a1 a2 = true -> a1 = a2.
+
     
   (* -------------------------------------------------------------------------------- *)
   (* Run-Length encode *)
@@ -73,6 +73,54 @@ Section RLE.
     | (n, v) :: tl => repeat n v ++ rld tl
     end.
 
+  Lemma rldTackOn(a : A)(xs : list (nat * A)) :
+                 rld (tackOn a xs) = a :: rld xs.
+  case xs as [|h t]; simpl.
+  + reflexivity.
+  + destruct h as [n a'].
+    destruct (eqb a a') eqn:e.    
+    - rewrite (eq a a' e).
+      reflexivity.
+    - reflexivity.
+  Qed.
+
+  Theorem RldRle : forall (xs : list A), rld (rle (toList xs)) = xs.
+    intros xs.
+    set (ind := foldi (Fi := ListFi A) (toList xs)
+                  (fun X xs => rld (rle xs) = fromList xs)
+        ).
+    simpl in ind; rewrite (inj A xs) in ind.
+    apply ind. apply constimap.
+    apply rollAlgi; unfold AlgF.
+    intros R _ fo _ ih d fd.
+    destruct fd.
+    - reflexivity.
+    - change (fromList (consInit A h t)) with (h :: fromList t). 
+      simpl'.
+      fold (List A) in *.
+      destruct (spanr A (Subrec.Subrec (ListF A)) (fold (ListF A)) (eqb h) t) as (l,r) eqn:e.
+      set (sg := guardPres A R fo (eqb h) t H l r e).
+      inversion sg.
+      -- change r with (outList A (inList r)).
+      set (rc := repeatCollect R fo out t H h 1 n l co ).
+      destruct rc as [rc1 rc2].
+      destruct l as [| a l].
+      + assumption.
+      + change (fromList (inL (Cons a l))) with (a :: fromList l) in rc1.
+        change (listIn A (Cons h (fromList t))) with (h :: fromList t).
+        change (repeat 1 h ++ fromList t) with (h :: fromList t) in rc1.
+        rewrite <- rc1.
+        change (rld ((n,h) :: tackOn a (rle l))) with (repeat n h ++ rld (tackOn a (rle l))).
+        rewrite (rldTackOn a (rle l)).
+        rewrite (ih l).
+        * reflexivity.
+        * inversion rc2.
+          ** contradiction (nilCons A a l H0).
+          ** destruct (consCons A h0 a t0 l H1) as [_ e].
+             rewrite e in H0.
+             assumption.
+    - exact (toListi _ xs).
+    Qed.
 
 (*
   (* -------------------------------------------------------------------------------- *)
@@ -90,8 +138,6 @@ Section RLE.
   (* Theorems (rle) *)  
   (* -------------------------------------------------------------------------------- *)
 
-  Definition foi := foi (Fi := (ListFi A)).
-  
   Definition repeatCollectP (S : kMo (ListF A))(xs : List A) : Prop :=
     forall (x : A)
            (k n : nat)
@@ -161,17 +207,6 @@ Section RLE.
              apply reveal.
              assumption.
     + exact Sxs.
-  Qed.
-
-  Lemma rldTackOn(a : A)(xs : list (nat * A)) :
-                 rld (tackOn a xs) = a :: rld xs.
-  case xs as [|h t]; simpl.
-  + reflexivity.
-  + destruct h as [n a'].
-    destruct (eqb a a') eqn:e.    
-    - rewrite (eq a a' e).
-      reflexivity.
-    - reflexivity.
   Qed.
 
   Theorem RldRle : forall (xs : list A), rld (rle (toList xs)) = xs.
