@@ -71,17 +71,18 @@ Section List.
   (* Smart constructors for List as Initial Carrier. *)
   (* -------------------------------------------------------------------------------- *)
 
-  Definition inL : ListF List -> List := inn ListF.
+  Definition inList : ListF List -> List := inn ListF.
+  Definition outList : List -> ListF List := out ListF.
   Definition prenil : forall (R S : Set), (ListF R -> S) -> S :=
     fun R S f => f Nil.
   
-  Definition nilInit : List := prenil List List inL.
+  Definition nilInit : List := prenil List List inList.
   
   Definition precons : forall (R S : Set), A -> R -> (ListF R -> S) -> S :=
     fun R S hd tl f => f (Cons hd tl).
 
   Definition consInit (hd : A) (tl : List) : List :=
-    precons List List hd tl inL.
+    precons List List hd tl inList.
 
   (* -------------------------------------------------------------------------------- *)
   (* despite noncanonicity, some expected properties of constructors hold             *)
@@ -221,7 +222,7 @@ End List.
 Arguments Nil {A} {X}.
 Arguments Cons {A} {X} a r.
 
-Arguments inL {A}.
+Arguments inList {A}.
 Arguments toList {A} xs.
 Arguments fromList {A} xs.
 Arguments canonList {A} xs.

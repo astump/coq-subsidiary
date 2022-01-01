@@ -20,7 +20,7 @@ Variable eqb : A -> A -> bool.
 Definition AppendF(p : A -> bool)(_ : List A -> Prop)(xs : List A) : Prop :=
   forall (l : list A)(r : ListF A (List A)),
     span A p xs = (l,r) ->
-    fromList xs = l ++ (fromList (inL r)).
+    fromList xs = l ++ (fromList (inList r)).
 
 Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C (AppendF p) .
   apply rollAlgi.
@@ -32,7 +32,7 @@ Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C 
     reflexivity.
   + intros l r.
     change (fromList (consInit A h t)) with (h :: fromList t).
-    set (r' := fromList (inL r)).
+    set (r' := fromList (inList r)).
     destruct (p h) eqn:e.
     ++ simpl'.
        rewrite e.
@@ -40,7 +40,7 @@ Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) C 
        intro u; injection u as u1 u2.
        rewrite (ih t H l0 l1 e2).
        rewrite <- u1.
-       set (r'' := fromList (inL l1)).
+       set (r'' := fromList (inList l1)).
        simpl.
        unfold r', r''.
        rewrite <- u2.

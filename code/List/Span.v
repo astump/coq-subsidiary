@@ -45,7 +45,7 @@ Section Span.
 
   Definition spanl(p : A -> bool)(xs : list A) : (list A * list A) :=
     let (l,r) := span p (toList xs) in
-      (l, fromList (inL r)).
+      (l, fromList (inList r)).
 
 End Span.
 

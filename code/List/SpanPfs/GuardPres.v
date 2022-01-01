@@ -2,6 +2,7 @@
 
 Require Import Subrec.
 Require Import Subreci.
+Require Import Mui.
 Require Import Kinds.
 Require Import Functors.
 Require Import List.List.
@@ -20,7 +21,15 @@ Variable eqb : A -> A -> bool.
 Definition GuardPresF(p : A -> bool)(S : List A -> Prop)(xs : List A) : Prop :=
   forall (l : list A)(r : ListF A (List A)),
     span A p xs = (l,r) ->
-    ListFi A S (inL r).
+    ListFi A S (inList r).
+
+Lemma GuardPresFuni(p : A -> bool) : fmapiT (List A) (GuardPresF p).
+  intros X Y f xs gxs l r u.
+  destruct (gxs l r u).
+  + apply nilFi.
+  + apply consFi.
+    auto.
+Qed.
 
 Lemma GuardPres(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) (ListFi A) S (GuardPresF p) .
   apply rollAlgi.
@@ -52,5 +61,9 @@ Lemma GuardPres(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) (ListFi A)
        apply consFi.
        assumption.
 Qed.
+
+Definition guardPres(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) (ListFi A)) R d)
+                    (p : A -> bool)(xs : List A)(rxs : R xs) : GuardPresF p R xs
+ := foi xs (GuardPresF p) (GuardPresFuni p) (GuardPres p R) rxs.
 
 End GuardPres.
