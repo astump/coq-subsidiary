@@ -5,7 +5,7 @@ Section Pd.
 
 Context {A : Set}(eqb : A -> A -> bool).
 
-Definition PairwiseDistinct := LocallySorted (liftRel eqb).
+Definition PairwiseDistinct := LocallySorted (liftRelneg eqb).
 
 End Pd.
 

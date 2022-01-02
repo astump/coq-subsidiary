@@ -35,3 +35,4 @@ Lemma hopRepeat : forall{A : Set} (n : nat)(a : A)(xs : list A),
 Qed.
 
 Definition liftRel{A:Set}(r:A -> A -> bool)(x y : A) : Prop := r x y = true.
+Definition liftRelneg{A:Set}(r:A -> A -> bool)(x y : A) : Prop := r x y = false.

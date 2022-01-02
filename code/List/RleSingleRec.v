@@ -8,11 +8,13 @@ Require Import List.
 Require Import Functors.
 
 Require Import Coq.Lists.List.
+Require Import Coq.Sorting.Sorted.
 Require Import Coq.Init.Nat.
 Require Import Plus.
 Require Import Le.
 
 Require Import ExtraLib.
+Require Import PairwiseDistinct.
 Require Import Rld.
 
 Require Import Coq.Logic.FunctionalExtensionality.
@@ -27,80 +29,74 @@ Variable eqb : A -> A -> bool.
 Variable eq : forall a1 a2, eqb a1 a2 = true -> a1 = a2.
 Variable eqRefl : forall a , eqb a a = true.
     
-Fixpoint rleh(xs:list A)(e : option (nat * A)):list (nat * A) :=
+Fixpoint rleh(xs:list A)(n : nat)(h' : A):list (nat * A) :=
   match xs with
-    nil => match e with
-             None => []
-           | Some e => [ e ]
-           end
+    nil => [ (n,h') ]
   | cons h t =>
-    match e with
-      None => rleh t (Some (1,h))
-    | Some (n,h') =>
       if eqb h h' then
-        rleh t (Some (1+n,h'))
+        rleh t (S n) h'
       else
-        (n,h')::rleh t (Some (1,h))
-    end
+        (n,h')::rleh t 1 h 
   end.
 
-Definition rle(xs:list A) : list (nat * A) := rleh xs None.
-
-Definition expand(e : option(nat * A)) : list A :=
-  match e with
-    None => []
-  | Some (n,a) => repeat a n
+Definition rle(xs:list A) : list (nat * A) :=
+  match xs with
+    nil => []
+  | cons h t => rleh t 1 h
   end.
+
+Theorem rlehRld(xs : list A) :
+  forall(n : nat)(h' : A),
+    rld (rleh xs n h') = repeat h' n ++ xs.
+  induction xs as [|h t]; intros n h'; trivial.
+  simpl.
+  destruct (eqb h h') eqn:u.
+  + rewrite (IHt (S n) h').
+    simpl.
+    rewrite (hopRepeat n h' t).
+    rewrite (eq h h' u).
+    trivial.
+  + simpl.
+    rewrite (IHt 1 h).
+    trivial.
+Qed.
 
 Theorem rleRld(xs : list A) :
-  forall(e : option (nat * A)),
-    rld (rleh xs e) = expand e ++ xs.
-  induction xs; intro e.
-  + simpl.
-    destruct e as [(n,a)|]; reflexivity.
-  + destruct e as [(n,a')|].
-    ++ simpl.
-       destruct (eqb a a') eqn:u.
-       +++ rewrite (IHxs (Some (S n,a'))).
-           simpl.
-           rewrite (hopRepeat n a' xs).
-           rewrite (eq a a' u).
-           reflexivity.
-       +++ simpl.
-           rewrite (IHxs (Some (1,a))).
-           simpl.
-           reflexivity.
-    ++ simpl.
-       rewrite (IHxs (Some (1,a))).
-       simpl.
-       reflexivity.
+  rld (rle xs) = xs.
+  case xs; trivial.
+  intros a l.
+  apply rlehRld.  
+Qed.
+
+Theorem rlehRepeat(a : A)(n : nat) :
+  forall k : nat , rleh (repeat a n) k a = [(k+n,a)].
+induction n; intro k; simpl.
++ rewrite (plus_0_r k).
+  reflexivity.
++ rewrite (eqRefl a).
+  rewrite (IHn (S k)).
+  rewrite (plus_Snm_nSm k n).
+  trivial.
 Qed.
 
 Theorem rleRepeat(a : A)(n : nat) :
-  rleh (repeat a (S n)) None = [(S n,a)] /\
-  forall k : nat , rleh (repeat a n) (Some (k,a)) = [(k+n,a)].
-induction n.
-+ simpl.
-  apply conj.
-  ++ reflexivity.
-  ++ intro k.
-     rewrite (plus_0_r k).
-     reflexivity.
-+ apply conj.
-  ++ simpl.
-     rewrite (eqRefl a).
-     rewrite (proj2 IHn 2).
-     reflexivity.
-  ++ intro k.
-     simpl.
-     rewrite (eqRefl a).
-     rewrite (proj2 IHn (S k)).
-     rewrite (plus_Snm_nSm k n).
-     reflexivity.
+  rle (repeat a (S n)) = [(S n,a)].
+  apply rlehRepeat.
 Qed.
 
-(*Theorem rleDistinct(xs : list A)*)
+Print snd.
 
+(*
+Theorem rleDistinct(xs : list A):
+  forall(n:nat)(h':A),
+    PairwiseDistinct eqb (map (@snd nat A) (rleh xs n h')).
+  induction xs as [|h t]; intros n h'; simpl.
+  + apply LSorted_cons1.
+  + destruct (eqb h h') eqn:e.
+    ++ apply IHt.
+    ++ simpl. 
+       apply LSorted_consn.
+*)
 End RLE.
 
 (* testcases *)
