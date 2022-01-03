@@ -14,8 +14,8 @@ Require Import List.ExtraLib.
 Require Import Rld.
 
 Require Import Span.
-Require Import SpanPfs.Append.
 (*
+Require Import SpanPfs.Append.
 Require Import SpanPfs.Forall.
 Require Import SpanPfs.GuardPres.
 (*Require Import SpanPfs.Repeat.
@@ -37,11 +37,8 @@ Section RLE.
           match xs with
           | Nil => []
           | Cons hd tl =>
-            match spanr fo (eqb hd) tl with
-              SpanNoMatch true => [(1,hd)]
-            | SpanNoMatch false => (1,hd) :: eval tl
-            | SpanSomeMatch p s => (succ (length p),hd) :: eval s
-            end
+            let (p,s) := spanr fo (eqb hd) tl in
+              (succ (length p),hd) :: eval s
           end).
 
   Definition rle(xs : List A) : list (nat * A)
