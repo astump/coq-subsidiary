@@ -15,9 +15,11 @@ Require Import Rld.
 
 Require Import Span.
 Require Import SpanPfs.Append.
+(*
 Require Import SpanPfs.Forall.
 Require Import SpanPfs.GuardPres.
 (*Require Import SpanPfs.Repeat.
+*)
 *)
 Import ListNotations.
 
@@ -36,7 +38,8 @@ Section RLE.
           | Nil => []
           | Cons hd tl =>
             match spanr fo (eqb hd) tl with
-              SpanNoMatch => (1,hd) :: eval tl
+              SpanNoMatch true => [(1,hd)]
+            | SpanNoMatch false => (1,hd) :: eval tl
             | SpanSomeMatch p s => (succ (length p),hd) :: eval s
             end
           end).
@@ -44,6 +47,7 @@ Section RLE.
   Definition rle(xs : List A) : list (nat * A)
     := @fold (ListF A) RleCarr (FunConst (list (nat * A))) RleAlg xs.
 
+(*
   Theorem RldRle : forall (xs : list A), rld (rle (toList xs)) = xs.
     intros xs.
     listInd (fun (X : List A -> Prop) xs => rld (rle xs) = fromList xs) xs; trivial.
@@ -91,7 +95,7 @@ Theorem RleRepeat(a : A)(n : nat) :
     ++ trivial.
     ++ simpl in ih2; discriminate ih2.
 Qed.
-
+*)
 End RLE.
 
 (* testcases *)

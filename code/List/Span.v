@@ -16,7 +16,7 @@ Section Span.
   Variable eqb : A -> A -> bool.
     
   Inductive SpanF(X : Set) : Set :=
-    SpanNoMatch : SpanF X
+    SpanNoMatch : bool (* true iff input list was empty *) -> SpanF X
   | SpanSomeMatch : list A -> X -> SpanF X.
 
   Arguments SpanNoMatch{X}.
@@ -25,7 +25,7 @@ Section Span.
   Global Instance SpanFunctor : Functor (@SpanF) :=
     {fmap X Y f c :=
        match c with
-         SpanNoMatch => SpanNoMatch 
+         SpanNoMatch b => SpanNoMatch b
        | SpanSomeMatch l x => SpanSomeMatch l (f x)
        end
     }.
@@ -35,15 +35,15 @@ Section Span.
     rollAlg 
       (fun R reveal fo out eval xs => 
          match xs with
-           Nil => SpanNoMatch 
+           Nil => SpanNoMatch true
          | Cons hd tl =>
             if p hd then
               match (eval tl) with
-                SpanNoMatch => SpanSomeMatch [hd] tl
+                SpanNoMatch _ => SpanSomeMatch [hd] tl
               | SpanSomeMatch l r => SpanSomeMatch (hd::l) r
               end
             else
-              SpanNoMatch
+              SpanNoMatch false
          end).
 
   Definition spanr{R : Set}(fo:FoldT (Alg (ListF A)) R)

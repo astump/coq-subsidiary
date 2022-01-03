@@ -11,8 +11,6 @@ Require Import List.ExtraLib.
 Require Import Coq.Lists.List.
 Require Import Coq.Init.Nat.
 
-Require Import SpanPfs.Nil.
-
 Import ListNotations.
 
 Section spanForall.
@@ -50,23 +48,24 @@ Definition spanForall(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A
 
 Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
   Forallb p (fromList xs) ->
-  fmap fromList (span p xs) = SpanSomeMatch (fromList xs) []
-  \/ (fromList xs = []).
+  span p xs = SpanSomeMatch (fromList xs) (nilInit A)
+  \/ span p xs = SpanNoMatch true.
 
 Lemma SpanForall2(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (spanForall2F p)) .
   apply rollAlgi.
   intros R _ fo _ ih xs fxs .
-  destruct fxs.
+  destruct fxs as [|h t rt].
   + intro u; apply or_intror; trivial.
   + intro u; apply or_introl.
     change (fromList (consInit A h t)) with (h :: fromList t) in *.
-    inversion u.
-    set (fm := fmap fromList).
+    inversion u as [|h' t' ph' u'].
     simpl'.
-    rewrite H2.
+    rewrite ph'.
     fold (span p t).
-    destruct (ih t H H3) as [ih1| ih2].
-    ++ destruct (span p t) eqn:e1.
+    destruct (ih t rt u') as [ih1| ih1]; rewrite ih1.
+    ++ trivial.
+    ++ 
+destruct (span p t) eqn:e1.
        +++ simpl in ih1; discriminate ih1.
        +++ unfold fm in *; simpl in ih1|-*.
            inversion ih1 as [(ih1a,ih1b)].
