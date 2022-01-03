@@ -167,6 +167,22 @@ Section List.
   Definition append (xs ys : List) : List :=
     fold ListF _ _ appendAlg xs ys.
   
+  Definition getNilAlg(R : Set) : Alg ListF R option :=
+    rollAlg (fun _ _ _ _ eval xs =>
+               match xs with
+                 Nil => None
+               | Cons hd tl =>
+                 match (eval tl) with
+                   None => Some tl
+                 | Some tl => Some tl
+                 end
+               end).
+
+  Definition getNil(xs:List) : List :=
+    match fold ListF option FunOption (getNilAlg List) xs with
+      None => xs
+    | Some q => q
+    end.
 
   (* -------------------------------------------------------------------------------- *)
   (* Dependent stuff *)

@@ -48,7 +48,7 @@ Definition spanForall(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A
 
 Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
   Forallb p (fromList xs) ->
-  span p xs = SpanSomeMatch (fromList xs) (nilInit A)
+  span p xs = SpanSomeMatch (fromList xs) (getNil xs)
   \/ span p xs = SpanNoMatch true.
 
 Lemma SpanForall2(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (spanForall2F p)) .

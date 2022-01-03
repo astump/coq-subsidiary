@@ -14,7 +14,6 @@ List/PairwiseDistinct.v
 List/Span.v
 List/Rld.v
 List/SpanPfs/Append.v
-List/SpanPfs/Nil.v
 List/SpanPfs/Forall.v
 List/SpanPfs/GuardPres.v
 List/Rle.v
