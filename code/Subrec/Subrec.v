@@ -113,8 +113,7 @@ Definition inn : F Subrec -> Subrec :=
   
 End Subrec.
 
-
-
+Arguments rollAlg{F}{C}{X} algf.
 
 (* -------------------------------------------------------------------------------- *)
 (* -- Common Tactics *)

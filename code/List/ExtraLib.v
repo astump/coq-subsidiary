@@ -27,6 +27,16 @@ Lemma Foralleqb{A : Set}(eqb:A -> A -> bool)(eq:forall(a a' : A), eqb a a' = tru
     reflexivity.
 Qed.
 
+Lemma Foralleqb2{A : Set}(eqb:A -> A -> bool)(eqRefl:forall(a : A), eqb a a = true)
+      (a : A)(n : nat) : Forallb (eqb a) (repeat a n).
+  induction n.
+  + apply Forall_nil.
+  + apply Forall_cons.
+    ++ apply eqRefl.    
+    ++ fold (repeat a n).
+       apply IHn.
+Qed.
+
 Lemma hopRepeat : forall{A : Set} (n : nat)(a : A)(xs : list A),
     a :: repeat a n ++ xs = repeat a n ++ a :: xs.
   intros. induction n; simpl.

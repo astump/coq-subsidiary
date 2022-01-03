@@ -18,41 +18,28 @@ Variable A : Set.
 Variable eqb : A -> A -> bool.
 
 Definition AppendF(p : A -> bool)(xs : List A) : Prop :=
-  forall (l : list A)(r : ListF A (List A)),
-    span A p xs = (l,r) ->
-    fromList xs = l ++ (fromList (inList r)).
+  forall (l : list A)(r : List A),
+    span p xs = SpanSomeMatch l r ->
+    fromList xs = l ++ (fromList r).
 
 Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (AppendF p)) .
   apply rollAlgi.
   intros R _ _ _ ih xs fxs .
   destruct fxs.
-  + intros l r u .
-    injection u as u1 u2.
-    rewrite <- u2 , <- u1.
-    reflexivity.
+  + intros l r u; inversion u.
   + intros l r.
     change (fromList (consInit A h t)) with (h :: fromList t).
-    set (r' := fromList (inList r)).
+    simpl'.
+    fold (span p t).
     destruct (p h) eqn:e.
-    ++ simpl'.
-       rewrite e.
-       destruct (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (List A)) t)eqn:e2.
-       intro u; injection u as u1 u2.
-       rewrite (ih t H l0 l1 e2).
-       rewrite <- u1.
-       set (r'' := fromList (inList l1)).
-       simpl.
-       unfold r', r''.
-       rewrite <- u2.
-       destruct l1; reflexivity.
-    ++ simpl'.
-       rewrite e.
-       intro u.
-       injection u as u1 u2.
-       rewrite <- u1.
-       unfold r'.
-       rewrite <- u2.
-       reflexivity.
+    ++ destruct (span p t) eqn:e2;
+         intro u;
+         injection u as u1 u2;
+         rewrite <- u2 , <- u1.
+       +++ trivial.
+       +++ rewrite (ih t H l0 l1 e2).
+           trivial.                        
+    ++ intro u. discriminate u.
 Qed.
 
 Definition append(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)

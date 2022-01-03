@@ -21,11 +21,14 @@ Variable eqb : A -> A -> bool.
 Lemma Repeat(p : A -> bool)(a : A) :
             p a = true ->
             forall(n : nat),
-              spanr (fold (ListF A)) p (toList (repeat a n)) = (repeat a n, Nil).
+              spanr (fold (ListF A)) p (toList (repeat a (S n))) = SpanSomeMatch (repeat a (S n)) (nilInit A).
   intro pa.
-  induction n; trivial.
-  + unfold spanr. simpl'. rewrite pa.
+  induction n.
+  + unfold spanr; simpl'; rewrite pa; simpl'; trivial.
+  + unfold spanr; simpl'; rewrite pa.
+    fold (spanr (fold (ListF A)) p (toList (repeat a (S n)))).
     unfold spanr , toList in IHn.
+    simpl in IHn.
     rewrite IHn.
     trivial.
 Qed.
