@@ -9,6 +9,7 @@ Subrec/Mui.v
 Subrec/Subrec.v
 Subrec/Subreci.v
 List/List.v
+List/ListPfs.v
 List/ExtraLib.v
 List/PairwiseDistinct.v
 List/Span.v

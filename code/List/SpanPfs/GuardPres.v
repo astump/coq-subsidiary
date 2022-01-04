@@ -20,7 +20,7 @@ Variable eqb : A -> A -> bool.
 
 Definition GuardPresF(p : A -> bool)(S : List A -> Prop)(xs : List A) : Prop :=
   forall (l : list A)(r : List A),
-    span p xs = SpanSomeMatch l r ->
+    spanh p xs = SpanSomeMatch l r ->
     S r.
 
 Lemma GuardPresFuni(p : A -> bool) : fmapiT (List A) (GuardPresF p).
@@ -29,16 +29,16 @@ Lemma GuardPresFuni(p : A -> bool) : fmapiT (List A) (GuardPresF p).
   exact (gxs l r u).
 Qed.
 
-Lemma GuardPres(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) ListFi S (GuardPresF p) .
+Lemma GuardPresh(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) ListFi S (GuardPresF p) .
   apply rollAlgi.
   intros R _ _ _ ih xs fxs .
   destruct fxs.
   + intros l r u ; inversion u.
   + intros l r.
     simpl'.
-    fold (span p t).
+    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (Subrec.Subrec (ListF A))) t) with (spanh p t).
     destruct (p h) eqn:e.
-    ++ destruct (span p t) eqn:e2;
+    ++ destruct (spanh p t) eqn:e2;    
          intro u;
          injection u as u1 u2; rewrite <- u2.
        +++ assumption.
@@ -46,10 +46,19 @@ Lemma GuardPres(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) ListFi S (
     ++ intro u; discriminate.
 Qed.
 
-Definition guardPres(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
+Definition guardPresh{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
                     (p : A -> bool)(xs : List A)(rxs : R xs) : GuardPresF p R xs
- := foi xs (GuardPresF p) (GuardPresFuni p) (GuardPres p R) rxs.
+ := foi xs (GuardPresF p) (GuardPresFuni p) (GuardPresh p R) rxs.
+
+Lemma guardPres{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
+      (p : A -> bool)(xs : List A)(rxs : R xs) : R (snd (span p xs)).
+ set (g:= guardPresh foi p xs rxs).  
+ destruct (spanh p xs) eqn:e; unfold span,spanr; unfold spanh in e; rewrite e.
+ + assumption.
+ + simpl.
+   exact (g l l0 e).
+Qed.
 
 End GuardPres.
 
-Arguments guardPres {A} {R} foi p xs rxs {l} {r} e.
+Arguments guardPres {A} {R} foi p xs rxs .

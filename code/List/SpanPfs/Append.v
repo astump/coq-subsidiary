@@ -17,35 +17,32 @@ Section Append.
 Variable A : Set.
 Variable eqb : A -> A -> bool.
 
-Definition AppendF(p : A -> bool)(xs : List A) : Prop :=
-  forall (l : list A)(r : List A),
-    span p xs = SpanSomeMatch l r ->
-    fromList xs = l ++ (fromList r).
+Definition SpanAppendF(p : A -> bool)(xs : List A) : Prop :=
+    let (l,r) := span p xs in
+      fromList xs = l ++ (fromList r).
 
-Lemma Append(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (AppendF p)) .
+Lemma SpanAppend(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (SpanAppendF p)) .
   apply rollAlgi.
   intros R _ _ _ ih xs fxs .
   destruct fxs.
-  + intros l r u; inversion u.
-  + intros l r.
-    change (fromList (consInit A h t)) with (h :: fromList t).
-    simpl'.
-    fold (span p t).
-    destruct (p h) eqn:e.
-    ++ destruct (span p t) eqn:e2;
-         intro u;
-         injection u as u1 u2;
-         rewrite <- u2 , <- u1.
-       +++ trivial.
-       +++ rewrite (ih t H l0 l1 e2).
-           trivial.                        
-    ++ intro u. discriminate u.
+  + reflexivity.
+  + hnf.
+    change (fromList (consInit h t)) with (h :: fromList t).
+    unfold span,spanr,spanhr; simpl'.
+    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (Subrec.Subrec (ListF A))) t) with (spanh p t).
+    destruct (p h) eqn:e; destruct (spanh p t) eqn:e'; trivial.
+    ++ set (ih1 := ih t H).
+       unfold Consti, SpanAppendF,span,spanr in ih1.
+       unfold spanh in e'.       
+       rewrite e' in ih1.
+       rewrite ih1.      
+       reflexivity.
 Qed.
 
-Definition append(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
-           (p : A -> bool)(xs : List A)(rxs : R xs) : AppendF p xs :=
-  foi xs (Consti (AppendF p)) (FunConsti (AppendF p)) (Append p R) rxs.
+Definition spanAppend{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
+           (p : A -> bool)(xs : List A)(rxs : R xs) : SpanAppendF p xs :=
+  foi xs (Consti (SpanAppendF p)) (FunConsti (SpanAppendF p)) (SpanAppend p R) rxs.
 
 End Append.
 
-Arguments append{A}{R} foi p xs rxs {l}{r} e.
+Arguments spanAppend{A}{R}.

@@ -19,66 +19,72 @@ Variable A : Set.
 Variable eqb : A -> A -> bool.
 
 Definition spanForallF(p : A -> bool)(xs : List A) : Prop :=
-  forall (l : list A)(r : List A),
-    span p xs = SpanSomeMatch l r ->
-    Forallb p l.
+   Forallb p (fst (span p xs)).
 
 Lemma SpanForall(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (spanForallF p)) .
   apply rollAlgi.
   intros R _ _ _ ih xs fxs .
-  destruct fxs.
-  + intros l r u ; inversion u.
-  + intros l r.
-    simpl'.
-    fold (span p t).
+  destruct fxs; unfold Consti, spanForallF.
+  + apply Forall_nil.
+  + unfold span, spanr, spanhr. simpl'.
+    change (Subrec.Subrec (ListF A)) with (List A).
+    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (List A)) t) with (spanh p t).
     destruct (p h) eqn:e.
-    ++ destruct (span p t) eqn:e2;
-         intro u;
-         injection u as u1 u2;
-         rewrite <- u1;
-         apply Forall_cons; try assumption.
+    ++ destruct (spanh p t) eqn:e'; apply Forall_cons; try assumption.
        +++ apply Forall_nil.
-       +++ apply (ih t H l0 l1 e2).
-    ++ intro u; discriminate u.
+       +++ set (i := ih t H).
+           unfold Consti, spanForallF, span, spanr in i.
+           unfold spanh in e'.
+           rewrite e' in i.
+           exact i.
+    ++ apply Forall_nil.
 Qed.
 
-Definition spanForall(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
+Definition spanForall{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
            (p : A -> bool)(xs : List A)(rxs : R xs) : spanForallF p xs :=
   foi xs (Consti (spanForallF p)) (FunConsti (spanForallF p)) (SpanForall p R) rxs.
 
 Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
   Forallb p (fromList xs) ->
-  span p xs = SpanSomeMatch (fromList xs) (getNil xs)
-  \/ span p xs = SpanNoMatch true.
+  span p xs = (fromList xs, getNil xs).
 
 Lemma SpanForall2(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (spanForall2F p)) .
   apply rollAlgi.
   intros R _ fo _ ih xs fxs .
   destruct fxs as [|h t rt].
-  + intro u; apply or_intror; trivial.
-  + intro u; apply or_introl.
-    change (fromList (consInit A h t)) with (h :: fromList t) in *.
+  + intro u; trivial.
+  + intro u.
+    change (fromList (consInit h t)) with (h :: fromList t) in *.
     inversion u as [|h' t' ph' u'].
-    simpl'.
+    unfold span, spanr,spanhr. simpl'.
     rewrite ph'.
-    fold (span p t).
-    destruct (ih t rt u') as [ih1| ih1]; rewrite ih1.
-    ++ trivial.
-    ++ 
-destruct (span p t) eqn:e1.
-       +++ simpl in ih1; discriminate ih1.
-       +++ unfold fm in *; simpl in ih1|-*.
-           inversion ih1 as [(ih1a,ih1b)].
-           trivial.           
-    ++ rewrite (spanNil A R fo p t H ih2).
-       unfold fm.
-       rewrite <- ih2.
-       simpl.
-       trivial.
+    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (Subrec.Subrec (ListF A))) t) with (spanh p t).
+    set (ih1 := ih t rt u').
+    unfold span , spanr in ih1.
+    destruct (spanh p t) eqn:e; unfold spanh in e; rewrite e in ih1.
+    ++ inversion ih1 as [(ih1a, ih1b)].
+       assert (q : getNil t = getNil (consInit h (getNil t))).
+       +++ rewrite <- ih1b.
+           unfold getNil; simpl'.
+           change (fold (ListF A) (fun A0 : Set => option A0) FunOption (getNilAlg A (List A)) t) with (getNilh t).
+           unfold getNil in ih1b.
+           destruct (getNilh t) eqn:e'; assumption.
+       +++ rewrite <- q.
+           trivial.
+    ++ injection ih1 as ih1a ih1b.
+       rewrite <- ih1a.
+       assert (q : l0 = getNil (consInit h t)).
+       +++ unfold getNil; simpl'.
+           change (fold (ListF A) (fun A0 : Set => option A0) FunOption (getNilAlg A (List A)) t) with (getNilh t).
+           destruct (getNilh t) eqn:e';unfold getNil in ih1b; rewrite e' in ih1b; assumption.
+    +++ rewrite <- q; trivial.
 Qed.
 
-Definition spanForall2(R : List A -> Prop)(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
+Definition spanForall2{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
            (p : A -> bool)(xs : List A)(rxs : R xs) : spanForall2F p xs :=
   foi xs (Consti (spanForall2F p)) (FunConsti (spanForall2F p)) (SpanForall2 p R) rxs.
 
 End spanForall.
+
+Arguments spanForall{A}{R}.
+Arguments spanForall2{A}{R}.

@@ -46,9 +46,16 @@ Section Span.
               SpanNoMatch 
          end).
 
+  Definition spanhr{R : Set}(fo:FoldT (Alg (ListF A)) R)
+                  (p : A -> bool)(xs : R) : SpanF R :=
+    fo SpanF SpanFunctor (SpanAlg p R) xs.
+
+  Definition spanh(p : A -> bool)(xs : List A) : SpanF (List A) :=
+    spanhr (fold (ListF A)) p xs.
+
   Definition spanr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                   (p : A -> bool)(xs : R) : list A * R
-    := match fo SpanF SpanFunctor (SpanAlg p R) xs with
+    := match spanhr fo p xs with
          SpanNoMatch => ([],xs)
        | SpanSomeMatch l r => (l,r)
        end.
@@ -56,6 +63,7 @@ Section Span.
   Definition span(p : A -> bool)(xs : List A) : list A * List A
     := spanr (fold (ListF A)) p xs.
 
+  (* intended just for testing below *)
   Definition spanl(p : A -> bool)(xs : list A) : list A * list A :=
     let (l,r) := span p (toList xs) in
       (l,fromList r).
@@ -64,6 +72,8 @@ End Span.
 
 Arguments spanr{A}{R}fo p xs.
 Arguments span{A} p xs.
+Arguments spanh{A} p xs.
+Arguments spanhr{A}{R}fo p xs.
 Arguments SpanNoMatch{A}{X}.
 Arguments SpanSomeMatch{A}{X}.
 

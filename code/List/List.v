@@ -178,11 +178,16 @@ Section List.
                  end
                end).
 
+  Definition getNilh(xs : List) : option List :=
+    fold ListF option FunOption (getNilAlg List) xs.
+
   Definition getNil(xs:List) : List :=
-    match fold ListF option FunOption (getNilAlg List) xs with
+    match getNilh xs with
       None => xs
     | Some q => q
     end.
+    
+
 
   (* -------------------------------------------------------------------------------- *)
   (* Dependent stuff *)
@@ -237,12 +242,15 @@ End List.
 Arguments Nil {A} {X}.
 Arguments Cons {A} {X} a r.
 
+Arguments nilInit{A}.
+Arguments consInit{A}.
 Arguments inList {A}.
 Arguments toList {A} xs.
 Arguments fromList {A} xs.
 Arguments canonList {A} xs.
 Arguments inj{A} xs.
-
+Arguments getNil{A}.
+Arguments getNilh{A}.
 Arguments ListFi {A} R xs.
 
 Arguments ForaL {A} P l.
@@ -250,12 +258,14 @@ Arguments ForaL {A} P l.
 Definition ex  : list nat := [1 ; 2 ; 3 ; 4 ; 5 ; 6].
 Definition ex' : List nat := (toList ex).
 
+Ltac fromCons := change (fromList (consInit ?h ?t)) with (h :: fromList t).
+
 (* prove P (toList xs) using Subreci for lists *)
 Ltac listInd P xs :=
   let ind := fresh "ind" in
     set (ind := foldi (Fi := ListFi) (toList xs) P);
     simpl in ind; try (rewrite (inj xs) in ind);
-    apply ind; clear ind; [apply FunConsti | apply rollAlgi; intros R reveal fo out ih d fd; destruct fd | idtac].
+    apply ind; clear ind; [apply FunConsti | apply rollAlgi; intros R reveal fo out ih d fd; destruct fd; [ idtac | fromCons] | exact (toListi _ xs)].
 
 Arguments nilCons{A}{h}{t} e.
 Arguments consCons{A}{h1}{h2}{t1}{t2} e.
