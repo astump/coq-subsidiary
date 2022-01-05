@@ -65,14 +65,12 @@ Section List.
   
   Definition List := @Subrec ListF .
 
-  Definition ListOut : List -> ListF List := @out ListF FunListF .
-
   (* -------------------------------------------------------------------------------- *)
   (* Smart constructors for List as Initial Carrier. *)
   (* -------------------------------------------------------------------------------- *)
 
   Definition inList : ListF List -> List := inn ListF.
-  Definition outList : List -> ListF List := out ListF.
+  Definition outList : List -> ListF List := out ListF (fold ListF).
   Definition prenil : forall (R S : Set), (ListF R -> S) -> S :=
     fun R S f => f Nil.
   
@@ -90,7 +88,7 @@ Section List.
 
   Lemma nilCons : forall(h:A)(t:List), nilInit = consInit h t -> False.
     intros h t u.
-    assert (c : ListOut nilInit = ListOut (consInit h t)).
+    assert (c : outList nilInit = outList (consInit h t)).
     + rewrite u; reflexivity.    
     + discriminate c.    
   Qed.
@@ -99,7 +97,7 @@ Section List.
                    consInit h1 t1 = consInit h2 t2 ->
                    h1 = h2 /\ t1 = t2.
     intros h1 h2 t1 t2 u.
-    assert (c : ListOut (consInit h1 t1) = ListOut (consInit h2 t2)).
+    assert (c : outList (consInit h1 t1) = outList (consInit h2 t2)).
     + rewrite u; reflexivity.
     + simpl in c.
       injection c.
@@ -113,7 +111,7 @@ Section List.
   Definition toList (xs : list A) : List := listFold xs (inn ListF).
   Definition fromList : List -> list A :=
     fold ListF (Const (list A)) (FunConst (list A))
-         (rollAlg (fun R reveal fo out eval fr => listIn (fmap eval fr))) .
+         (rollAlg (fun R reveal fo eval fr => listIn (fmap eval fr))) .
   Definition canonList (xs : List) : List := toList (fromList xs).
 
   Definition ListPT :
@@ -148,7 +146,7 @@ Section List.
   (* this used to be an Alg, but I need an SAlg other places -- Aaron *)
   Definition LengthAlg(C : Set) : Alg ListF C (Const nat) :=
    rollAlg
-   (fun _ _ _ _ eval xs =>
+   (fun _ _ _ eval xs =>
        match xs with
          Nil => 0
        | Cons hd tl => 1 + eval tl
@@ -158,7 +156,7 @@ Section List.
     fold ListF (Const nat) (FunConst nat) (LengthAlg List).
 
   Definition appendAlg : Alg ListF List (Const (List -> List)) :=
-    rollAlg (fun _ _ _ _ eval xs ys =>
+    rollAlg (fun _ _ _ eval xs ys =>
                match xs with
                | Nil => ys
                | Cons hd tl => consInit hd (eval tl ys)
@@ -168,7 +166,7 @@ Section List.
     fold ListF _ _ appendAlg xs ys.
   
   Definition getNilAlg(R : Set) : Alg ListF R option :=
-    rollAlg (fun _ _ _ _ eval xs =>
+    rollAlg (fun _ _ _ eval xs =>
                match xs with
                  Nil => None
                | Cons hd tl =>
@@ -234,7 +232,7 @@ Section List.
     }.
 
   Definition Listi := Subreci ListF ListFi.
-  Definition toListi(xs : list A) : Listi (toList xs) := listFoldi xs Listi (inni depList).
+  Definition toListi(xs : list A) : Listi (toList xs) := listFoldi xs Listi inni.
   Definition listAlgi := Algi ListF ListFi.
 
 End List.
@@ -265,7 +263,7 @@ Ltac listInd P xs :=
   let ind := fresh "ind" in
     set (ind := foldi (Fi := ListFi) (toList xs) P);
     simpl in ind; try (rewrite (inj xs) in ind);
-    apply ind; clear ind; [apply FunConsti | apply rollAlgi; intros R reveal fo out ih d fd; destruct fd; [ idtac | fromCons] | exact (toListi _ xs)].
+    apply ind; clear ind; [apply FunConsti | apply rollAlgi; intros R reveal fo ih d fd; destruct fd; [ idtac | fromCons] | exact (toListi _ xs)].
 
 Arguments nilCons{A}{h}{t} e.
 Arguments consCons{A}{h1}{h2}{t1}{t2} e.

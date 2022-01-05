@@ -31,7 +31,7 @@ Qed.
 
 Lemma GuardPresh(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) ListFi S (GuardPresF p) .
   apply rollAlgi.
-  intros R _ _ _ ih xs fxs .
+  intros R _ _ ih xs fxs .
   destruct fxs.
   + intros l r u ; inversion u.
   + intros l r.

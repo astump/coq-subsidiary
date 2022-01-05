@@ -33,7 +33,7 @@ Section RLE.
 
   Definition RleCarr := Const (list (nat * A)).
   Definition RleAlg : Alg (ListF A) (List A) RleCarr :=
-    rollAlg (fun R reveal fo out eval xs =>
+    rollAlg (fun R reveal fo eval xs =>
           match xs with
           | Nil => []
           | Cons hd tl =>

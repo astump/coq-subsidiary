@@ -22,7 +22,7 @@ Definition getNilIdem{R : List A -> Prop}
            (xs : List A)(rxs : R xs) : getNilIdemP xs.
   apply (foi xs (Consti getNilIdemP) (FunConsti getNilIdemP)).
   apply rollAlgi.  
-  + intros S _ _ _ ih d fd.
+  + intros S _ _ ih d fd.
     destruct fd.
     ++ reflexivity.
     ++ unfold Consti, getNilIdemP,getNil. simpl'.

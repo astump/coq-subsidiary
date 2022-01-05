@@ -23,7 +23,7 @@ Definition spanForallF(p : A -> bool)(xs : List A) : Prop :=
 
 Lemma SpanForall(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (spanForallF p)) .
   apply rollAlgi.
-  intros R _ _ _ ih xs fxs .
+  intros R _ _ ih xs fxs .
   destruct fxs; unfold Consti, spanForallF.
   + apply Forall_nil.
   + unfold span, spanr, spanhr. simpl'.
@@ -50,7 +50,7 @@ Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
 
 Lemma SpanForall2(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (spanForall2F p)) .
   apply rollAlgi.
-  intros R _ fo _ ih xs fxs .
+  intros R _ fo ih xs fxs .
   destruct fxs as [|h t rt].
   + intro u; trivial.
   + intro u.

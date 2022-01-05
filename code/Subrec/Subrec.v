@@ -33,7 +33,6 @@ Definition AlgF(A: KAlg)(C : Set)(X : Set -> Set) : Set :=
   forall (R : Set)
       (reveal : R -> C)        
       (fo : FoldT A R)
-      (out : (R -> F R))
       (eval : R -> X R)      
       (d : F R),             
       X R.
@@ -104,13 +103,13 @@ Definition unroll: Subrec -> SubrecF Subrec :=
 
 Definition fold : FoldT Alg Subrec := fun X FunX alg d => unroll d X FunX alg.
 
-Definition out : Subrec -> F Subrec :=
-  fold F FunF (rollAlg (fun _ _ _ _ _ d => d)).
-
 Definition inn : F Subrec -> Subrec :=
   fun d => roll (fun X xmap alg =>
-                    unrollAlg alg Subrec (fun x => x) fold out (fold X xmap alg) d).
-  
+                    unrollAlg alg Subrec (fun x => x) fold (fold X xmap alg) d).
+
+Definition out{R:Set}(fo:FoldT Alg R) : R -> F R :=
+  fo F FunF (rollAlg (fun _ _ _ _ d => d)).
+
 End Subrec.
 
 Arguments rollAlg{F}{C}{X} algf.

@@ -33,7 +33,7 @@ Section Span.
   Definition SpanAlg(p : A -> bool)(C : Set)
     : Alg (ListF A) C (@SpanF) :=
     rollAlg 
-      (fun R reveal fo out eval xs => 
+      (fun R reveal fo eval xs => 
          match xs with
            Nil => SpanNoMatch 
          | Cons hd tl =>

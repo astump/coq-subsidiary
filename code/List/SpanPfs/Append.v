@@ -23,7 +23,7 @@ Definition SpanAppendF(p : A -> bool)(xs : List A) : Prop :=
 
 Lemma SpanAppend(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (SpanAppendF p)) .
   apply rollAlgi.
-  intros R _ _ _ ih xs fxs .
+  intros R _ _ ih xs fxs .
   destruct fxs.
   + reflexivity.
   + hnf.

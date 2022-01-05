@@ -52,7 +52,6 @@ Definition AlgF(A: KAlgi)(C : kMo)(X : kMo -> kMo) : Set :=
   forall (R : kMo)
     (reveal : (forall (d : Subrec), R d -> C d))        
     (fo : (forall (d : Subrec), FoldTi A R d))
-    (out : (forall (d : Subrec), (R d -> Fi R d)))
     (ih : (forall (d : Subrec), R d -> X R d))
     (d : Subrec),
     Fi R d -> X R d.
@@ -104,19 +103,24 @@ Definition unrolli :=
 
 Definition foldi(i : Subrec) : FoldTi Algi Subreci i := fun X xmap alg d => unrolli i d X xmap alg.
 
-Definition outi(i :Subrec) : Subreci i -> Fi Subreci i :=
-  foldi i Fi FiMap
-            (rollAlgi
-               (fun R rev fo out ih i' df => df)).
-
 
 Definition inni(i : Subrec)(fd : Fi Subreci i) : Subreci i :=
   rolli i 
             (fun X xmap alg =>
                let reveal := fun d1 x => x in
                let IH := fun i1 d => unrolli i1 d X xmap alg in
-               unrollAlgi alg Subreci reveal foldi outi IH i fd
+               unrollAlgi alg Subreci reveal foldi IH i fd
             ).
+
+Definition outi{R:Subrec -> Prop}
+           (foi : forall i : Subrec, FoldTi Algi R i)
+           (i :Subrec) : R i -> Fi R i :=
+  foi i Fi FiMap
+            (rollAlgi
+               (fun R rev fo ih i' df => df)).
+
+
+
 End Subreci.
 
 (* Make F implicit for all terms after Subrec decl. *)
