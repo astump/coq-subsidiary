@@ -68,6 +68,12 @@ Section Span.
     let (l,r) := span p (toList xs) in
       (l,fromList r).
 
+  Definition dropWhile(p : A -> bool)(xs : List A) : List A :=
+    snd (span p xs).
+
+  Definition break(p : A -> bool)(xs : List A) : list A * List A :=
+    span (fun x => negb (p x)) xs.
+
 End Span.
 
 Arguments spanr{A}{R}fo p xs.

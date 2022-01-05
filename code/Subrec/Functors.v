@@ -1,8 +1,10 @@
 Require Import Coq.Lists.List.
 
+Definition FmapT(A B : Set)(F : Set -> Set) : Set := forall(f : A -> B), F A -> F B.
+
 Class Functor (F : Set -> Set) :=
   {
-  fmap : forall {A B : Set}(f : A -> B), F A -> F B;
+  fmap : forall {A B : Set}, FmapT A B F;
   }.
 
 

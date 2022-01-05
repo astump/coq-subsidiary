@@ -12,10 +12,12 @@ List/List.v
 List/ListPfs.v
 List/ExtraLib.v
 List/PairwiseDistinct.v
-List/Span.v
 List/Rld.v
+List/MapThrough.v
+List/Span.v
 List/SpanPfs/Append.v
 List/SpanPfs/Forall.v
 List/SpanPfs/GuardPres.v
 List/Rle.v
+List/RlePfs.v
 List/RleSingleRec.v
