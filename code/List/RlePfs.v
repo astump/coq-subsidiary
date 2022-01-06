@@ -28,6 +28,7 @@ Section RlePfs.
   Variable eq : forall a1 a2, eqb a1 a2 = true -> a1 = a2.
   Variable eqRefl : forall a , eqb a a = true.
 
+(*
   Theorem RldRle (xs : list A): rld (rle eqb (toList xs)) = xs.
     listInd (fun (X : List A -> Prop) xs => rld (rle eqb xs) = fromList xs) xs; trivial.
     - simpl'.
@@ -46,7 +47,7 @@ Section RlePfs.
       rewrite sa.
       trivial.
   Qed.
-
+*)
 (*
 Theorem RleRepeat(a : A)(n : nat) :
     rle (toList (repeat a (S n))) = [(S n,a)].
