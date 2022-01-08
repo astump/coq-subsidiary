@@ -22,7 +22,7 @@ Section Span.
   Arguments SpanNoMatch{X}.
   Arguments SpanSomeMatch{X}.
 
-  Global Instance SpanFunctor : Functor (@SpanF) :=
+  Global Instance SpanFunctor : Functor SpanF :=
     {fmap X Y f c :=
        match c with
          SpanNoMatch => SpanNoMatch 
@@ -31,14 +31,14 @@ Section Span.
     }.
   
   Definition SpanAlg(p : A -> bool)(C : Set)
-    : Alg (ListF A) C (@SpanF) :=
+    : Alg (ListF A) C SpanF :=
     rollAlg 
-      (fun R reveal fo eval xs => 
+      (fun R reveal fo span xs => 
          match xs with
            Nil => SpanNoMatch 
          | Cons hd tl =>
             if p hd then
-              match (eval tl) with
+              match (span tl) with
                 SpanNoMatch => SpanSomeMatch [hd] tl
               | SpanSomeMatch l r => SpanSomeMatch (hd::l) r
               end
@@ -68,11 +68,19 @@ Section Span.
     let (l,r) := span p (toList xs) in
       (l,fromList r).
 
+  Definition dropWhiler{R : Set}(fo:FoldT (Alg (ListF A)) R)
+             (p : A -> bool)(xs : R) : R :=
+    snd (spanr fo p xs).
+
   Definition dropWhile(p : A -> bool)(xs : List A) : List A :=
-    snd (span p xs).
+    dropWhiler (fold (ListF A)) p xs.
+
+  Definition breakr{R : Set}(fo:FoldT (Alg (ListF A)) R)
+             (p : A -> bool)(xs : R) : list A * R :=
+    (spanr fo (fun x => negb (p x)) xs).
 
   Definition break(p : A -> bool)(xs : List A) : list A * List A :=
-    span (fun x => negb (p x)) xs.
+    breakr (fold (ListF A)) p xs.
 
 End Span.
 
@@ -82,6 +90,10 @@ Arguments spanh{A} p xs.
 Arguments spanhr{A}{R}fo p xs.
 Arguments SpanNoMatch{A}{X}.
 Arguments SpanSomeMatch{A}{X}.
+Arguments dropWhiler{A}{R}.
+Arguments dropWhile{A}.
+Arguments breakr{A}{R}.
+Arguments break{A}.
 
 (*Ltac foldSpan :=
   change (fold (ListF ?A) (SpanF ?A) (SpanFunctor ?A) (SpanAlg ?A ?p (List ?A)) ?t) with (span ?A ?p ?t). 

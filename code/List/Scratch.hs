@@ -13,6 +13,13 @@ wordsBy f s = case dropWhile f s of
     x:xs -> (x:w) : wordsBy f (drop 1 z)
         where (w,z) = break f xs
 
+wordsBy' :: (a -> Bool) -> [a] -> [[a]]
+wordsBy' p [] = []
+wordsBy' p (hd:tl) | p hd = wordsBy' p tl
+                   | otherwise =
+   let (w,z) = break p tl in
+     (hd:w) : wordsBy' p z
+
 rle :: Eq a => [a] -> [(Int,a)]
 rle = mapThrough compressSpan
   where compressSpan a as =

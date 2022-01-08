@@ -84,8 +84,6 @@ Theorem rleRepeat(a : A)(n : nat) :
   apply rlehRepeat.
 Qed.
 
-Print snd.
-
 (*
 Theorem rleDistinct(xs : list A):
   forall(n:nat)(h':A),

@@ -18,6 +18,9 @@ List/Span.v
 List/SpanPfs/Append.v
 List/SpanPfs/Forall.v
 List/SpanPfs/GuardPres.v
+List/SplitAt.v
+List/WordsBy.v
+List/ChunksOf.v
 List/Rle.v
 List/RlePfs.v
 List/RleSingleRec.v
