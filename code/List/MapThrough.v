@@ -25,10 +25,10 @@ Section MapThrough.
     rollAlg 
       (fun R reveal fo eval xs => 
          match xs with
-           Nil => nilInit 
+           Nil => mkNil 
          | Cons hd tl =>
            let (b,c) := mapped R fo hd tl in
-             consInit b (eval c)
+             mkCons b (eval c)
          end).
 
   Definition mapThroughr{R : Set}(fo:FoldT (Alg (ListF A)) R)

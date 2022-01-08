@@ -54,7 +54,7 @@ Lemma SpanForall2(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C
   destruct fxs as [|h t rt].
   + intro u; trivial.
   + intro u.
-    change (fromList (consInit h t)) with (h :: fromList t) in *.
+    change (fromList (mkCons h t)) with (h :: fromList t) in *.
     inversion u as [|h' t' ph' u'].
     unfold span, spanr,spanhr. simpl'.
     rewrite ph'.
@@ -63,7 +63,7 @@ Lemma SpanForall2(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C
     unfold span , spanr in ih1.
     destruct (spanh p t) eqn:e; unfold spanh in e; rewrite e in ih1.
     ++ inversion ih1 as [(ih1a, ih1b)].
-       assert (q : getNil t = getNil (consInit h (getNil t))).
+       assert (q : getNil t = getNil (mkCons h (getNil t))).
        +++ rewrite <- ih1b.
            unfold getNil; simpl'.
            change (fold (ListF A) (fun A0 : Set => option A0) FunOption (getNilAlg A (List A)) t) with (getNilh t).
@@ -73,7 +73,7 @@ Lemma SpanForall2(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C
            trivial.
     ++ injection ih1 as ih1a ih1b.
        rewrite <- ih1a.
-       assert (q : l0 = getNil (consInit h t)).
+       assert (q : l0 = getNil (mkCons h t)).
        +++ unfold getNil; simpl'.
            change (fold (ListF A) (fun A0 : Set => option A0) FunOption (getNilAlg A (List A)) t) with (getNilh t).
            destruct (getNilh t) eqn:e';unfold getNil in ih1b; rewrite e' in ih1b; assumption.

@@ -15,10 +15,11 @@ wordsBy f s = case dropWhile f s of
 
 wordsBy' :: (a -> Bool) -> [a] -> [[a]]
 wordsBy' p [] = []
-wordsBy' p (hd:tl) | p hd = wordsBy' p tl
-                   | otherwise =
-   let (w,z) = break p tl in
-     (hd:w) : wordsBy' p z
+wordsBy' p (hd:tl) =
+  if p hd
+  then wordsBy' p tl 
+  else let (w,z) = break p tl in
+        (hd:w) : wordsBy' p z
 
 rle :: Eq a => [a] -> [(Int,a)]
 rle = mapThrough compressSpan

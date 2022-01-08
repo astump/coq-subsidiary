@@ -71,33 +71,25 @@ Section List.
 
   Definition inList : ListF List -> List := inn ListF.
   Definition outList : List -> ListF List := out ListF (fold ListF).
-  Definition prenil : forall (R S : Set), (ListF R -> S) -> S :=
-    fun R S f => f Nil.
-  
-  Definition nilInit : List := prenil List List inList.
-  
-  Definition precons : forall (R S : Set), A -> R -> (ListF R -> S) -> S :=
-    fun R S hd tl f => f (Cons hd tl).
-
-  Definition consInit (hd : A) (tl : List) : List :=
-    precons List List hd tl inList.
+  Definition mkNil : List := inList Nil.
+  Definition mkCons (hd : A) (tl : List) : List := inList (Cons hd tl).
 
   (* -------------------------------------------------------------------------------- *)
   (* despite noncanonicity, some expected properties of constructors hold             *)
   (* -------------------------------------------------------------------------------- *)
 
-  Lemma nilCons : forall(h:A)(t:List), nilInit = consInit h t -> False.
+  Lemma nilCons : forall(h:A)(t:List), mkNil = mkCons h t -> False.
     intros h t u.
-    assert (c : outList nilInit = outList (consInit h t)).
+    assert (c : outList mkNil = outList (mkCons h t)).
     + rewrite u; reflexivity.    
     + discriminate c.    
   Qed.
 
   Lemma consCons : forall(h1 h2 : A)(t1 t2 : List),
-                   consInit h1 t1 = consInit h2 t2 ->
+                   mkCons h1 t1 = mkCons h2 t2 ->
                    h1 = h2 /\ t1 = t2.
     intros h1 h2 t1 t2 u.
-    assert (c : outList (consInit h1 t1) = outList (consInit h2 t2)).
+    assert (c : outList (mkCons h1 t1) = outList (mkCons h2 t2)).
     + rewrite u; reflexivity.
     + simpl in c.
       injection c.
@@ -159,7 +151,7 @@ Section List.
     rollAlg (fun _ _ _ eval xs ys =>
                match xs with
                | Nil => ys
-               | Cons hd tl => consInit hd (eval tl ys)
+               | Cons hd tl => mkCons hd (eval tl ys)
                end
             ).
   Definition append (xs ys : List) : List :=
@@ -193,8 +185,8 @@ Section List.
       
   Definition lkMo := List -> Prop.
   Inductive ListFi(R : lkMo) : lkMo :=
-    nilFi : ListFi R nilInit
-  | consFi : forall (h : A)(t : List), R t -> ListFi R (consInit h t).
+    nilFi : ListFi R mkNil
+  | consFi : forall (h : A)(t : List), R t -> ListFi R (mkCons h t).
 
   Arguments nilFi {R}.
   Arguments consFi {R} h t rt.
@@ -240,8 +232,8 @@ End List.
 Arguments Nil {A} {X}.
 Arguments Cons {A} {X} a r.
 
-Arguments nilInit{A}.
-Arguments consInit{A}.
+Arguments mkNil{A}.
+Arguments mkCons{A}.
 Arguments inList {A}.
 Arguments toList {A} xs.
 Arguments fromList {A} xs.
@@ -256,7 +248,7 @@ Arguments ForaL {A} P l.
 Definition ex  : list nat := [1 ; 2 ; 3 ; 4 ; 5 ; 6].
 Definition ex' : List nat := (toList ex).
 
-Ltac fromCons := change (fromList (consInit ?h ?t)) with (h :: fromList t).
+Ltac fromCons := change (fromList (mkCons ?h ?t)) with (h :: fromList t).
 
 (* prove P (toList xs) using Subreci for lists *)
 Ltac listInd P xs :=

@@ -29,15 +29,15 @@ Definition FoldT(alg : KAlg)(C : Set) : Set :=
 (* Algebra *)
 (* -------------------------------------------------------------------------------- *)
 
-Definition AlgF(A: KAlg)(C : Set)(X : Set -> Set) : Set :=
+Definition AlgF(Alg: KAlg)(C : Set)(X : Set -> Set) : Set :=
   forall (R : Set)
       (reveal : R -> C)        
-      (fo : FoldT A R)
+      (fold : FoldT Alg R)
       (eval : R -> X R)      
       (d : F R),             
       X R.
 
-Definition Alg := MuAlg AlgF.
+Definition Alg : KAlg := MuAlg AlgF.
 
 Definition monoAlg : forall (A B : KAlg), CastAlg A B -> CastAlg (AlgF A) (AlgF B) :=
   fun A B f =>

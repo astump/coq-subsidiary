@@ -26,7 +26,7 @@ Section ChunksOf.
   Definition chunksOfr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                       (s : nat)(xs : R) : List (list A) :=
     match s with
-      O => nilInit
+      O => mkNil
     | S n =>
       fo (Const (List (list A))) (FunConst (List (list A))) (ChunksOf n R) xs
     end.

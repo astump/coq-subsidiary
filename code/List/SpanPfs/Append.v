@@ -27,7 +27,7 @@ Lemma SpanAppend(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C 
   destruct fxs.
   + reflexivity.
   + hnf.
-    change (fromList (consInit h t)) with (h :: fromList t).
+    change (fromList (mkCons h t)) with (h :: fromList t).
     unfold span,spanr,spanhr; simpl'.
     change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (Subrec.Subrec (ListF A))) t) with (spanh p t).
     destruct (p h) eqn:e; destruct (spanh p t) eqn:e'; trivial.
