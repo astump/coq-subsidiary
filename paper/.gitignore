@@ -1,1 +1,5 @@
-lipics
+lipics-dir
+*.log
+*.vtc
+*.out
+*.aux
