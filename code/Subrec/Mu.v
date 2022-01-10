@@ -6,8 +6,9 @@ Require Import Coq.Setoids.Setoid.
  
 Section Mu.
 
-  Variable F : Set -> Set.
-  Context {FunF : Functor F}.           
+  Context (F : Set -> Set)
+          {FunF : Functor F}
+          {fmapId : forall (A : Set)(d : F A), fmap (fun x => x) d = d}.   
 
   Definition MAlgebra
              (A : Set) :=
@@ -23,6 +24,12 @@ Section Mu.
     match m with
     | mu A r d => fmap r d
     end.
+
+  Lemma outIn(d : F Mu) : outMu (inMu d) = d.
+    simpl.
+    rewrite fmapId.
+    reflexivity.
+  Qed.
 
   Definition IndMu(m : Mu) : Set :=
     forall X : Mu -> Set,
