@@ -335,6 +335,8 @@ Definition AlgF(Alg: KAlg)(C : Set)(X : Set -> Set) : Set :=
 Definition Alg : KAlg := MuAlg AlgF.
 
 Definition fold : FoldT Alg Subrec.
+Definition rollAlg : forall {C : Set} {X : Set -> Set}, AlgF Alg C X -> Alg C X.
+Definition unrollAlg : forall {C : Set} {X : Set -> Set}, Alg C X -> AlgF Alg C X.
 \end{verbatim}
 \caption{The type for algebras (\texttt{Subrec.v})}
 \label{fig:algf}
@@ -379,19 +381,142 @@ the flexibility to type results inside a recursion with the abstract
 type \verb|R|, but view those results as having the anchor type
 \verb|C| outside the recursion.
 
-The final definition in the figure is for \verb|fold|, which allows
-us to fold an \verb|Alg| over a value of type \verb|Subrec|.  We will
-return to the code for this, and definitions of \verb|Subrec| and \verb|inn|,
-in Section~\ref{sec:deriv}.
+The final definitions in the figure are for \verb|fold|, which allows
+us to fold an \verb|Alg| over a value of type \verb|Subrec|; and for mapping
+between \verb|Alg| and its unfolding in terms of \verb|AlgF|.  We will
+return to the code for \verb|Subrec.v| in Section~\ref{sec:deriv}.
 
 \section{Examples of subsidiary recursion}
 \label{sec:examples}
 
-Having seen now the interface for subsidiary recursion in Coq, let us
-consider now some examples, listed by their filename in the development.
+Having seen the interface for subsidiary recursion in Coq, let us
+consider now some examples.
 
-\subsection{\texttt{Span.v}}
+\subsection{The \texttt{span} function (\texttt{Span.v})}
 
+Given a predicate \verb|p : A -> bool|, and a value of type
+\verb|List A|, we would like to compute a pair of type
+\verb|list A * List A|, where the first component is the maximal
+prefix whose elements satisfy \verb|p|, and the second is the
+remaining suffix.  This is the typing for a top-level recursion.  More
+generally, though, given an anchor type \verb|R : Set| along with a
+fold function for that anchor type (i.e., of type \verb|FoldT (Alg (ListF A)) R|),
+we would like to map an input list of type \verb|R| to a pair of
+type \verb|list A * R|.  The first component of this pair is
+going to be built up from scratch, and so cannot have type \verb|R|.
+But the second component will be a subdatum of the input list,
+and so can still have type \verb|R|.  This will enable outer recursions
+to continue on that component.  So we want: 
+\begin{verbatim}
+Definition spanr{R : Set}(fo:FoldT (Alg (ListF A)) R)
+                (p : A -> bool)(xs : R) : list A * R.
+\end{verbatim}
+\noindent From this we can also define the top-level recursion, by
+supplying \verb|fold (ListF A)|, which is the function for folding an algebra
+over a list (Figure~\ref{fig:algf}), for the argument \verb|fo| of \verb|spanr|:
+\begin{verbatim}
+Definition span(p : A -> bool)(xs : List A) : list A * List A
+  := spanr (fold (ListF A)) p xs.
+\end{verbatim} 
+
+Before we define \verb|spanr|, we must resolve a small problem.
+If the first element of the input list
+\verb|xs| to \verb|span| does not satisfy \verb|p|, then \verb|span|
+should return \verb|([], xs)|.  But when recursing on \verb|xs|, we
+will see it only in the form of a subdata structure of type
+\verb|F R|.  We will not be able to return it from our recursion at
+type \verb|R|, and hence we would not be able to return \verb|([],xs)|
+as desired.  To work around this, we will have our recursion return a value
+of type \verb|SpanF R|:
+\begin{verbatim}
+Inductive SpanF(X : Set) : Set :=
+  SpanNoMatch : SpanF X
+| SpanSomeMatch : list A -> X -> SpanF X.
+\end{verbatim}
+\noindent The idea is that the recursion will signal if it is in the
+one tricky case where \verb|p| does not match the first element, by
+returning \verb|SpanNoMatch|.  Otherwise, it will be able to return,
+via \verb|SpanSomeMatch|, a prefix and the suffix at type
+\verb|R|. The prefix will be nonempty, and hence the suffix will be at
+most the tail of \verb|xs|.  This tail is available to the algebra
+in the subdata structure of type \verb|F R|.
+
+Figure~\ref{fig:span} gives the algebra \verb|SpanAlg| for computing
+\verb|span|, and the code for \verb|spanr|.  We elide the proof
+\verb|SpanFunctor| that \verb|SpanF| is indeed a \verb|Functor|,
+and make \verb|X| implicit in the constructors of \verb|SpanF|.
+The type of \verb|SpanAlg| is
+\begin{verbatim}
+Alg (ListF A) C SpanF
+\end{verbatim}
+This states that we are defining an algebra (\verb|Alg|)
+for the \verb|ListF A| functor, with anchor type \verb|C| and carrier
+\verb|SpanF|.  The algebra does not depend on what the anchor type is,
+which is good, as it means we can use \verb|SpanAlg| for top-level or
+subsidiary recursions.
+
+Let us continue through the code for \verb|SpanAlg|
+(Figure~\ref{fig:span}).  We use \verb|rollAlg| to create an algebra
+from something whose type is an application of \verb|AlgF|.  This
+takes in all the components of the recursion universe: the abstract
+type \verb|R|, the \verb|reveal| function (not needed in this case),
+the \verb|fold| function for any subsidiary recursions (also not
+needed here), a function we choose to name \verb|span| for making
+recursive calls, and finally \verb|xs : ListF A R|.  The algebra
+pattern-matches on this \verb|xs|.  In the cases where it is empty or
+where its head (\verb|hd|) does not satisfy \verb|p|, we return
+\verb|SpanNoMatch|.  This signals to the caller that we really wished
+to return \verb|([],xs)|, but could not because we do not have
+\verb|xs| at type \verb|R|.  If the head does satisfy \verb|p|, then
+we recurse on the tail (\verb|tl|).  This is allowed because
+\verb|tl : R| and \verb|span : R -> SpanF R|.  If \verb|span tl|
+returns \verb|SpanNoMatch|, that means that we should make \verb|tl|
+the suffix in the pair we return (via \verb|SpanSomeMatch|).  Happily,
+we have \verb|tl : R| here, so we can do this.  In either case (for
+return value of \verb|span tl|), we add the head to the front of the
+prefix.  We define \verb|spanhr| to invoke the fold function it is
+given, on the algebra (\verb|SpanAlg|).
+
+The final twist is now in the definition of \verb|spanr|.  We call
+\verb|spanhr| on the input \verb|xs : R|.  If \verb|spanhr| returns
+\verb|SpanNoMatch|, then we are supposed to return \verb|([],xs)|,
+which we can do here, because we have \verb|xs : R|.  It was only
+inside the algebra that we lost the information that the subdata
+structure of type \verb|F R| is derived from a value of type \verb|R|.
+If \verb|spanhr| returns \verb|SpanSomeMatch|, then the return value
+gives us the nonempty prefix (\verb|l|) and the suffix (\verb|r|), which we then return.
+
+\begin{figure}
+\begin{verbatim}
+Definition SpanAlg(p : A -> bool)(C : Set)
+  : Alg (ListF A) C SpanF :=
+  rollAlg (fun R reveal fo span xs => 
+     match xs with
+         Nil => SpanNoMatch 
+       | Cons hd tl =>
+          if p hd then
+            match (span tl) with
+              SpanNoMatch => SpanSomeMatch [hd] tl
+            | SpanSomeMatch l r => SpanSomeMatch (hd::l) r
+            end
+          else
+            SpanNoMatch 
+       end).
+
+Definition spanhr{R : Set}(fo:FoldT (Alg (ListF A)) R)
+                 (p : A -> bool)(xs : R) : SpanF R :=
+  fo SpanF SpanFunctor (SpanAlg p R) xs.
+
+Definition spanr{R : Set}(fo:FoldT (Alg (ListF A)) R)
+                (p : A -> bool)(xs : R) : list A * R
+  := match spanhr fo p xs with
+       SpanNoMatch => ([],xs)
+     | SpanSomeMatch l r => (l,r)
+     end.
+\end{verbatim}
+\caption{The algebra \texttt{SpanAlg} for the \texttt{span} function, and some functions based on it}
+\label{fig:span}
+\end{figure}
 
 
 \section{Derivation of subsidiary recursion}
