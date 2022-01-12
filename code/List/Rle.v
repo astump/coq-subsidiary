@@ -1,4 +1,5 @@
 Require Import Subrec.
+Require Import Subreci.
 Require Import Kinds.
 Require Import Mu.
 Require Import List.
@@ -13,6 +14,11 @@ Require Import List.ExtraLib.
 
 Require Import MapThrough.
 Require Import Span.
+Require Import Rld.
+Require Import SpanPfs.Forall.
+Require Import SpanPfs.GuardPres.
+Require Import SpanPfs.Append.
+
 
 (*
 (*Require Import SpanPfs.Repeat.
@@ -25,6 +31,8 @@ Section RLE.
 
   Context { A : Set}.
   Variable eqb : A -> A -> bool.
+  Variable eq : forall a1 a2, eqb a1 a2 = true -> a1 = a2.
+  Variable eqRefl : forall a , eqb a a = true.
 
   Definition compressSpan : mappedT A (nat * A) :=
     fun R fo hd tl => 
@@ -41,6 +49,46 @@ Section RLE.
   Definition rlel(xs : List A) : list (nat * A)
     := fromList (rle xs).
 
+  Theorem RldRle (xs : list A): rld (rlel (toList xs)) = xs.  
+  listInd (fun (X : List A -> Prop) xs => rld (rlel xs) = fromList xs) xs.
+  + trivial.
+  + unfold rlel, rle; simpl'; unfold compressSpan.
+   destruct (span (eqb h) t) as (p,s) eqn:e.
+   unfold span in e.
+   rewrite e.
+   fold (rle s).
+   fromCons.
+   simpl.
+   fold (rlel s).
+   rewrite (ih s (guardPres fo (eqb h) t H e)).
+   rewrite <- (Foralleqb eqb eq h p (spanForall fo (eqb h) t H e)).
+   rewrite (spanAppend fo (eqb h) t H e).
+   trivial.
+Qed.
+
+(*
+  Theorem RldRle' (xs : list A): rld (rlel (toList xs)) = xs.  
+    change (rlel (toList xs)) with (fromList (mapThrough compressSpan (toList xs))).
+    rewrite <- (mapThroughInd (nat * A) compressSpan (fun xs ys => fromList xs = rld (fromList ys))
+               (toList xs)).
+    + apply inj.
+    + trivial.
+    + clear xs.
+      intros a (n,a') xs xs' ys R fo rxs.
+      unfold compressSpan.
+      change (spanr (fold (ListF A)) (eqb a)) with (span (eqb a)).
+      destruct (span (eqb a) xs) eqn:e.
+      intros u1 u2. 
+      fromCons.
+      simpl.
+      rewrite <- u2.
+      rewrite (spanAppend fo (eqb a) xs rxs e).
+      inversion u1 as [(u1a, u1b, u1c)]; clear u1; elim u1b.
+      simpl.
+      rewrite <- (Foralleqb eqb eq a l (spanForall fo (eqb a) xs rxs e)).
+      reflexivity.
+Qed.
+*)      
 End RLE.
 
 (* testcases *)

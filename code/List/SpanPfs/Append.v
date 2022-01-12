@@ -18,24 +18,29 @@ Variable A : Set.
 Variable eqb : A -> A -> bool.
 
 Definition SpanAppendF(p : A -> bool)(xs : List A) : Prop :=
-    let (l,r) := span p xs in
-      fromList xs = l ++ (fromList r).
+  forall (l : list A)(r : List A) ,
+    span p xs = (l,r) ->
+    fromList xs = l ++ (fromList r).
 
 Lemma SpanAppend(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (SpanAppendF p)) .
   apply rollAlgi.
-  intros R _ _ ih xs fxs .
-  destruct fxs.
-  + reflexivity.
-  + hnf.
-    change (fromList (mkCons h t)) with (h :: fromList t).
+  intros R _ _ ih xs fxs l r.
+  destruct fxs. 
+  + intro e; inversion e; trivial.
+  + change (fromList (mkCons h t)) with (h :: fromList t).
     unfold span,spanr,spanhr; simpl'.
-    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (Subrec.Subrec (ListF A))) t) with (spanh p t).
-    destruct (p h) eqn:e; destruct (spanh p t) eqn:e'; trivial.
-    ++ set (ih1 := ih t H).
-       unfold Consti, SpanAppendF,span,spanr in ih1.
+    destruct (p h) eqn:e.
+    ++ change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (Subrec.Subrec (ListF A))) t) with (spanh p t).
+       destruct (spanh p t) eqn:e'; intro u; inversion u as [(u1, u2)]; clear u.
+       +++ reflexivity.
+       +++ set (ih1 := ih t H l0 l1).
+       unfold span,spanr in ih1.
        unfold spanh in e'.       
        rewrite e' in ih1.
-       rewrite ih1.      
+       rewrite (ih1 eq_refl).      
+       rewrite u2.
+       reflexivity.
+    ++ intro u; inversion u as [(u1,u2)].
        reflexivity.
 Qed.
 
@@ -45,4 +50,4 @@ Definition spanAppend{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A
 
 End Append.
 
-Arguments spanAppend{A}{R}.
+Arguments spanAppend{A}{R} foi p xs rxs {l}{r}.

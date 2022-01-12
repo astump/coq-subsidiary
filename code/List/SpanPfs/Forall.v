@@ -19,31 +19,35 @@ Variable A : Set.
 Variable eqb : A -> A -> bool.
 
 Definition spanForallF(p : A -> bool)(xs : List A) : Prop :=
-   Forallb p (fst (span p xs)).
+  forall (l : list A)(r : List A),
+    span p xs = (l,r) ->
+    Forallb p l.
 
 Lemma SpanForall(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (spanForallF p)) .
   apply rollAlgi.
-  intros R _ _ ih xs fxs .
-  destruct fxs; unfold Consti, spanForallF.
-  + apply Forall_nil.
+  intros R _ _ ih xs fxs l r .
+  destruct fxs.
+  + intro e; inversion e; apply Forall_nil.
   + unfold span, spanr, spanhr. simpl'.
     change (Subrec.Subrec (ListF A)) with (List A).
     change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (List A)) t) with (spanh p t).
     destruct (p h) eqn:e.
-    ++ destruct (spanh p t) eqn:e'; apply Forall_cons; try assumption.
+    ++ destruct (spanh p t) eqn:e'; intro u; inversion u as [(u1,u2)]; clear u; apply Forall_cons; try assumption.
        +++ apply Forall_nil.
-       +++ set (i := ih t H).
-           unfold Consti, spanForallF, span, spanr in i.
+       +++ set (i := ih t H l0 l1).
+           unfold span, spanr in i.
            unfold spanh in e'.
            rewrite e' in i.
-           exact i.
-    ++ apply Forall_nil.
+           apply i.
+           reflexivity.
+    ++ intro u; inversion u; apply Forall_nil.
 Qed.
 
 Definition spanForall{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
            (p : A -> bool)(xs : List A)(rxs : R xs) : spanForallF p xs :=
   foi xs (Consti (spanForallF p)) (FunConsti (spanForallF p)) (SpanForall p R) rxs.
 
+(*
 Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
   Forallb p (fromList xs) ->
   span p xs = (fromList xs, getNil xs).
@@ -83,8 +87,8 @@ Qed.
 Definition spanForall2{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
            (p : A -> bool)(xs : List A)(rxs : R xs) : spanForall2F p xs :=
   foi xs (Consti (spanForall2F p)) (FunConsti (spanForall2F p)) (SpanForall2 p R) rxs.
-
+*)
 End spanForall.
 
-Arguments spanForall{A}{R}.
-Arguments spanForall2{A}{R}.
+Arguments spanForall{A}{R} foi p xs rxs {l}{r}.
+(*Arguments spanForall2{A}{R}.*)

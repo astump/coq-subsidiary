@@ -22,5 +22,4 @@ List/SplitAt.v
 List/WordsBy.v
 List/ChunksOf.v
 List/Rle.v
-List/RlePfs.v
 List/RleSingleRec.v

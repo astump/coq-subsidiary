@@ -51,14 +51,13 @@ Definition guardPresh{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A
  := foi xs (GuardPresF p) (GuardPresFuni p) (GuardPresh p R) rxs.
 
 Lemma guardPres{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
-      (p : A -> bool)(xs : List A)(rxs : R xs) : R (snd (span p xs)).
- set (g:= guardPresh foi p xs rxs).  
- destruct (spanh p xs) eqn:e; unfold span,spanr; unfold spanh in e; rewrite e.
- + assumption.
- + simpl.
-   exact (g l l0 e).
+      (p : A -> bool)(xs : List A)(rxs : R xs)(l:list A)(r : List A)(e: span p xs = (l,r)) : R r.
+ unfold span,spanr in e.
+ destruct (spanhr (fold (ListF A)) p xs) eqn:e'; inversion e; rewrite <- H1.
+ + assumption. 
+ + exact (guardPresh foi p xs rxs l0 s e').
 Qed.
 
 End GuardPres.
 
-Arguments guardPres {A} {R} foi p xs rxs .
+Arguments guardPres {A} {R} foi p xs rxs {l}{r}.
