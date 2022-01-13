@@ -39,27 +39,24 @@ Section RLE.
       let (p,s) := spanr fo (eqb hd) tl in
          ((succ (length p),hd), s).
 
-  Definition RleCarr := Const (List (nat * A)).
+  Definition RleCarr := Const (list (nat * A)).
   Definition RleAlg(C : Set) : Alg (ListF A) C RleCarr :=
     MapThroughAlg compressSpan C.
 
-  Definition rle(xs : List A) : List (nat * A)
-    := @fold (ListF A) RleCarr (FunConst (List (nat * A))) (RleAlg (List A)) xs.
+  Definition rle(xs : List A) : list (nat * A)
+    := @fold (ListF A) RleCarr (FunConst (list (nat * A))) (RleAlg (List A)) xs.
 
-  Definition rlel(xs : List A) : list (nat * A)
-    := fromList (rle xs).
-
-  Theorem RldRle (xs : list A): rld (rlel (toList xs)) = xs.  
-  listInd (fun (X : List A -> Prop) xs => rld (rlel xs) = fromList xs) xs.
+  Theorem RldRle (xs : list A): rld (rle (toList xs)) = xs.  
+  listInd (fun (X : List A -> Prop) xs => rld (rle xs) = fromList xs) xs.
   + trivial.
-  + unfold rlel, rle; simpl'; unfold compressSpan.
+  + unfold rle, rle; simpl'; unfold compressSpan.
    destruct (span (eqb h) t) as (p,s) eqn:e.
    unfold span in e.
    rewrite e.
    fold (rle s).
    fromCons.
    simpl.
-   fold (rlel s).
+   fold (rle s).
    rewrite (ih s (guardPres fo (eqb h) t H e)).
    rewrite <- (Foralleqb eqb eq h p (spanForall fo (eqb h) t H e)).
    rewrite (spanAppend fo (eqb h) t H e).
@@ -67,8 +64,8 @@ Section RLE.
 Qed.
 
 (*
-  Theorem RldRle' (xs : list A): rld (rlel (toList xs)) = xs.  
-    change (rlel (toList xs)) with (fromList (mapThrough compressSpan (toList xs))).
+  Theorem RldRle' (xs : list A): rld (rle (toList xs)) = xs.  
+    change (rle (toList xs)) with (fromList (mapThrough compressSpan (toList xs))).
     rewrite <- (mapThroughInd (nat * A) compressSpan (fun xs ys => fromList xs = rld (fromList ys))
                (toList xs)).
     + apply inj.
@@ -93,7 +90,7 @@ End RLE.
 
 (* testcases *)
 
-Definition test := rlel eqb (toList (1 :: 1 :: 1 :: 2 :: 2 :: 3 :: 3 :: 3 :: 3 :: 4 :: 5 :: 5 :: [])).
+Definition test := rle eqb (toList (1 :: 1 :: 1 :: 2 :: 2 :: 3 :: 3 :: 3 :: 3 :: 4 :: 5 :: 5 :: [])).
 
 Eval compute in test.
 
