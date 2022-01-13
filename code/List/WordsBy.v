@@ -8,14 +8,16 @@ Require Import List.List.
 Require Import Coq.Lists.List.
 Require Import Coq.Init.Nat.
 
+Require Import ExtraLib.
 Require Import Span.
+Require Import SpanPfs.Forall.
+Require Import SpanPfs.GuardPres.
 
 Import ListNotations.
 
 Section WordsBy.
 
   Variable A : Set.
-  Variable eqb : A -> A -> bool.
   
   Definition WordsBy(p : A -> bool)(C : Set)
     : Alg (ListF A) C (Const (list (list A))) :=
@@ -37,6 +39,25 @@ Section WordsBy.
 
   Definition wordsBy(p : A -> bool)(xs : List A) : list (list A) :=
     wordsByr (fold (ListF A)) p xs.
+
+  Definition wordsByThmT(p : A -> bool)(xs : List A) : Prop := Forall (Forallb (fun x => negb (p x))) (wordsBy p xs).
+
+  Theorem wordsByThm(p : A -> bool)(xs : list A) : wordsByThmT p (toList xs).  
+  listInd (fun (X : List A -> Prop) => wordsByThmT p) xs.
+  + apply Forall_nil.
+  + unfold wordsByThmT.
+    simpl'.
+    change (fold (ListF A) (Const (list (list A))) (FunConst (list (list A))) (WordsBy p (Subrec (ListF A))) t) with (wordsBy p t).
+    destruct (p h) eqn:e.
+    ++ exact (ih t H).
+    ++ destruct (breakr (fold (ListF A)) p t) eqn:e'.
+       apply Forall_cons.
+       +++ apply Forall_cons.
+           ++++ rewrite e; trivial.
+           ++++ apply (spanForall fo (fun x : A => negb (p x))t H e').
+       +++ apply ih.
+           exact (guardPres fo (fun x : A => negb (p x)) t H e').
+Qed.
 
 End WordsBy.
 
