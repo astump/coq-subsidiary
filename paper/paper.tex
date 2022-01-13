@@ -126,15 +126,12 @@ Let us see a simple example.  The function \verb|wordsBy| (from
 elements do not satisfy a predicate \verb|p|.  For example,
 \verb|wordsBy isSpace " good day "| returns \verb|["good","day"]|; so
 \verb|wordsBy isSpace| has the same behavior as \verb|words| (from
-\verb|Data.List|).  Code is in Figure~\ref{fig:wordsBy}, using
-also \verb|break| (\verb|Data.List|). Recall that
-\verb|break p| is equivalent to \verb|span (not . p)|: it splits its
-input into the maximal prefix whose elements do not satisfy \verb|p|,
-and the following suffix.  The first recursive call,
-\verb|wordsBy p tl|, is structural.  But in the second, we invoke
-\verb|wordsBy p| on a value obtained from another recursion, namely
-\verb|span|.  This is not allowed under structural termination, but
-will be permitted by subsidiary recursion as derived below.
+\verb|Data.List|).  Code is in Figure~\ref{fig:wordsBy}.  The first
+recursive call, \verb|wordsBy p tl|, is structural.  But in the
+second, we invoke \verb|wordsBy p| on a value obtained from another
+recursion, namely \verb|span|.  This is not allowed under structural
+termination, but will be permitted by subsidiary recursion as derived
+below.
 
 \begin{figure}
 \begin{verbatim}
@@ -143,7 +140,7 @@ wordsBy p [] = []
 wordsBy p (hd:tl) =
   if p hd
   then wordsBy p tl 
-  else let (w,z) = break p tl in
+  else let (w,z) = span (not . p) tl in
         (hd:w) : wordsBy p z
 \end{verbatim}
 \caption{Haskell code for \texttt{wordsBy}, demonstrating subsidiary recursion}
@@ -684,7 +681,7 @@ Definition mapThrough{B : Set}(f:mappedT A B) : List A -> list B :=
 \label{fig:mapthrough}
 \end{figure}
 
-\subsection{Run-length encoding}
+\subsection{Run-length encoding (\texttt{Rle.v})}
 
 Using \verb|mapThrough|, we can write a quite concise function for
 \emph{run-length encoding}, a basic data-compression algorithm where
