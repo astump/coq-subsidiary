@@ -91,6 +91,7 @@
 \end{abstract}
 
 \section{Introduction: subsidiary recursion}
+\label{sec:intro}
 
 Central to interactive theorem provers like Coq, Agda, Isabelle/HOL,
 Lean and others are terminating recursive functions over user-declared
@@ -120,17 +121,20 @@ called \textbf{subsidiary recursion}.  While performing an outer
 recursion on some input \verb|x|, one may initiate an inner recursion
 on \verb|x| (or possibly some of its subdata), preserving the
 possibility of further invocations of the outer recursive function.
-Let us see a simple example.  The function \verb|wordsBy|
-(from \verb|Data.List.Extra|) breaks a list into its maximal
-sublists whose elements do not satisfy a predicate \verb|p|.  For
-example, \verb|wordsBy isSpace " good day "| returns
-\verb|["good","day"]|; so \verb|wordsBy isSpace| has the same behavior
-as \verb|words| (from \verb|Data.List|).  Code is in
-Figure~\ref{fig:wordsBy}. The first recursive call,
+Let us see a simple example.  The function \verb|wordsBy| (from
+\verb|Data.List.Extra|) breaks a list into its maximal sublists whose
+elements do not satisfy a predicate \verb|p|.  For example,
+\verb|wordsBy isSpace " good day "| returns \verb|["good","day"]|; so
+\verb|wordsBy isSpace| has the same behavior as \verb|words| (from
+\verb|Data.List|).  Code is in Figure~\ref{fig:wordsBy}, using
+also \verb|break| (\verb|Data.List|). Recall that
+\verb|break p| is equivalent to \verb|span (not . p)|: it splits its
+input into the maximal prefix whose elements do not satisfy \verb|p|,
+and the following suffix.  The first recursive call,
 \verb|wordsBy p tl|, is structural.  But in the second, we invoke
 \verb|wordsBy p| on a value obtained from another recursion, namely
-\verb|span|.  This is not allowed under structural termination,
-but will be permitted by subsidiary recursion as derived below.
+\verb|span|.  This is not allowed under structural termination, but
+will be permitted by subsidiary recursion as derived below.
 
 \begin{figure}
 \begin{verbatim}
@@ -139,7 +143,7 @@ wordsBy p [] = []
 wordsBy p (hd:tl) =
   if p hd
   then wordsBy p tl 
-  else let (w,z) = span (not . p) tl in
+  else let (w,z) = break p tl in
         (hd:w) : wordsBy p z
 \end{verbatim}
 \caption{Haskell code for \texttt{wordsBy}, demonstrating subsidiary recursion}
@@ -195,7 +199,9 @@ Section~\ref{sec:related}.
 All presented derivations have been checked with Coq version 8.13.2,
 using command-line option \verb|-impredicative-set|.  The code may be
 found as release \verb|itp-2022| (dated prior to the ITP 2022
-deadline) at \url{https://github.com/astump/coq-subsidiary}.
+deadline) at \url{https://github.com/astump/coq-subsidiary}.  The
+paper references files in this codebase, as an aid to the reader
+wishing to peruse the code.
 
 \section{Interface for subsidiary recursion}
 \label{sec:interface}
@@ -335,8 +341,10 @@ Definition AlgF(Alg: KAlg)(C : Set)(X : Set -> Set) : Set :=
 Definition Alg : KAlg := MuAlg AlgF.
 
 Definition fold : FoldT Alg Subrec.
-Definition rollAlg : forall {C : Set} {X : Set -> Set}, AlgF Alg C X -> Alg C X.
-Definition unrollAlg : forall {C : Set} {X : Set -> Set}, Alg C X -> AlgF Alg C X.
+Definition rollAlg :
+  forall {C : Set} {X : Set -> Set}, AlgF Alg C X -> Alg C X.
+Definition unrollAlg : 
+  forall {C : Set} {X : Set -> Set}, Alg C X -> AlgF Alg C X.
 \end{verbatim}
 \caption{The type for algebras (\texttt{Subrec.v})}
 \label{fig:algf}
@@ -445,22 +453,23 @@ Figure~\ref{fig:span} gives the algebra \verb|SpanAlg| for computing
 \verb|span|, and the code for \verb|spanr|.  We elide the proof
 \verb|SpanFunctor| that \verb|SpanF| is indeed a \verb|Functor|,
 and make \verb|X| implicit in the constructors of \verb|SpanF|.
-The type of \verb|SpanAlg| is
+The type of \verb|SpanAlg p C| is
 \begin{verbatim}
 Alg (ListF A) C SpanF
 \end{verbatim}
-This states that we are defining an algebra (\verb|Alg|)
-for the \verb|ListF A| functor, with anchor type \verb|C| and carrier
-\verb|SpanF|.  The algebra does not depend on what the anchor type is,
-which is good, as it means we can use \verb|SpanAlg| for top-level or
-subsidiary recursions.
+This states that we are defining an algebra (\verb|Alg|) for the
+\verb|ListF A| functor, with anchor type \verb|C| and carrier
+\verb|SpanF|.  \verb|SpanF| has type \verb|Set -> Set|, as required
+for the carriers of our algebras. The definition of \verb|SpanAlg| is
+actually parametrized by \verb|C|, which is good, as it means we can
+use \verb|SpanAlg| for top-level or subsidiary recursions.
 
 Let us continue through the code for \verb|SpanAlg|
 (Figure~\ref{fig:span}).  We use \verb|rollAlg| to create an algebra
 from something whose type is an application of \verb|AlgF|.  This
 takes in all the components of the recursion universe: the abstract
 type \verb|R|, the \verb|reveal| function (not needed in this case),
-the \verb|fold| function for any subsidiary recursions (also not
+the fold function (\verb|fo|) for any subsidiary recursions (also not
 needed here), a function we choose to name \verb|span| for making
 recursive calls, and finally \verb|xs : ListF A R|.  The algebra
 pattern-matches on this \verb|xs|.  In the cases where it is empty or
@@ -468,8 +477,8 @@ where its head (\verb|hd|) does not satisfy \verb|p|, we return
 \verb|SpanNoMatch|.  This signals to the caller that we really wished
 to return \verb|([],xs)|, but could not because we do not have
 \verb|xs| at type \verb|R|.  If the head does satisfy \verb|p|, then
-we recurse on the tail (\verb|tl|).  This is allowed because
-\verb|tl : R| and \verb|span : R -> SpanF R|.  If \verb|span tl|
+we recurse on the tail (\verb|tl : R|) by calling the provided \verb|span : R -> SpanF R|.
+If \verb|span tl|
 returns \verb|SpanNoMatch|, that means that we should make \verb|tl|
 the suffix in the pair we return (via \verb|SpanSomeMatch|).  Happily,
 we have \verb|tl : R| here, so we can do this.  In either case (for
@@ -516,6 +525,226 @@ Definition spanr{R : Set}(fo:FoldT (Alg (ListF A)) R)
 \end{verbatim}
 \caption{The algebra \texttt{SpanAlg} for the \texttt{span} function, and some functions based on it}
 \label{fig:span}
+\end{figure}
+
+We can easily define \verb|break|, in Figure~\ref{fig:break}.  The
+function \verb|breakr| is a version of \verb|break| that can be used
+for subsidiary recursion, similarly to \verb|spanr| for \verb|span|.
+Such a function always takes in a fold function (\verb|fo|) with
+anchor type \verb|R|, which then is used to fold the algebra in
+question.
+
+\begin{figure}
+\begin{verbatim}
+Definition breakr{R : Set}(fo:FoldT (Alg (ListF A)) R)
+                 (p : A -> bool)(xs : R) : list A * R :=
+  spanr fo (fun x => negb (p x)) xs.
+
+Definition break(p : A -> bool)(xs : List A) : list A * List A :=
+  breakr (fold (ListF A)) p xs.
+\end{verbatim}
+\caption{The \texttt{break} function and its more flexible version, \texttt{breakr}, defined in terms of \texttt{spanr} (Figure~\ref{fig:span})}
+\label{fig:break}
+\end{figure}
+
+\subsection{The \texttt{wordsBy} function (\texttt{WordsBy.v})}
+
+Let us now see how to write \verb|wordsBy|, our example function from
+Section~\ref{sec:intro}, using \verb|spanr| as a subsidiary recursion.
+The code is in Figure~\ref{fig:wordsby}, assuming a type
+\verb|A : Set|.  The setup is similar to that for \verb|span|.  We first define
+an algebra \verb|WordsBy|, parametrized by anchor type \verb|C| (and also
+the predicate \verb|p|), of type
+\begin{verbatim}
+Alg (ListF A) C (Const (list (list A)))
+\end{verbatim}
+\noindent This says that \verb|WordsBy p C| is an algebra (\verb|Alg|)
+for the \verb|ListF A| functor, with anchor type \verb|C|, and carrier
+\verb|Const (list (list A))|.  \verb|Const| is the combinator for
+creating the object part of constant functors; \verb|FunConst| creates
+the morphism part (i.e., the \verb|fmap| function).  We use it
+\verb|Const| here and in other examples where the return type of the
+algebra will not depend on its abstract type \verb|R|.  Here, we are
+constructing from scratch a list of lists, so it will not be legal to
+recurse on the list itself, or its (list) elements.  Intead, we just
+use the \verb|list| type of Coq's standard library.
+
+The code for \verb|WordsBy| is, except for the noise of \verb|rollAlg|
+and accepting the components of the recursion universe, essentially
+the same as what we saw in Section~\ref{sec:intro}.  We pattern match
+on \verb|xs : ListF A R|.  Recall that for this function, we are
+trying to drop elements which satisfy \verb|p|, and return a list of
+the sublists between maximal sequences of such elements.  In the
+\verb|Cons| case, if the head (\verb|hd|) satisfies the predicate, then we are
+supposed to drop it and recurse.  This is legal, because \verb|tl : R|
+and \verb|wordsBy : R -> list (list A)|.  In the \verb|else| case,
+we use \verb|breakr| to obtain the maximal prefix \verb|w| of \verb|tl| that
+does not satisfy \verb|p|, and the remaining suffix \verb|z|.
+
+Here we see the benefit of our approach.  From Figure~\ref{fig:break},
+the return type of \verb|breakr| is \verb|list A * R|, where \verb|R|
+is the anchor type of the provided fold function \verb|fo|.  And
+\verb|fo| has type \verb|FoldT (ListF A) Alg R|, from the definition
+of \verb|AlgF| in Figure~\ref{fig:algf} (instantiating the functor
+with \verb|ListF A|).  This means that from the invocation of
+\verb|breakr|, we get \verb|w : list A| and \verb|z : R|.  And so we
+can indeed apply \verb|wordsBy : R -> list (list A)| to
+\verb|z| to recurse.
+
+\begin{figure}
+\begin{verbatim}
+  Definition WordsBy(p : A -> bool)(C : Set)
+    : Alg (ListF A) C (Const (list (list A))) :=
+    rollAlg (fun R reveal fo wordsBy xs => 
+         match xs with
+           Nil => [] 
+         | Cons hd tl =>
+           if p hd then
+             wordsBy tl
+           else
+             let (w,z) := breakr fo p tl in
+             (hd :: w) :: wordsBy z
+         end).
+
+Definition wordsByr{R : Set}(fo:FoldT (Alg (ListF A)) R)
+                   (p : A -> bool)(xs : R) : list (list A) :=
+  fo (Const (list (list A))) (FunConst (list (list A))) (WordsBy p R) xs.
+
+Definition wordsBy(p : A -> bool)(xs : List A) : list (list A) :=
+  wordsByr (fold (ListF A)) p xs.
+\end{verbatim}
+\caption{The \texttt{wordsBy} and \texttt{wordsByr} function, defined using an algebra}
+\label{fig:wordsby}
+\end{figure}
+
+\subsection{The \texttt{mapThrough} function (\texttt{MapThrough.v})}
+
+The Haskell library \verb|Data.List.Extra| has a function \verb|repeatedly|, which
+is defined essentially as follows; I have attempted a more informative name:
+\begin{verbatim}
+mapThrough :: (a -> [a] -> (b, [a])) -> [a] -> [b]
+mapThrough f [] = []
+mapThrough f (a:as) = b : mapThrough f as'
+    where (b, as') = f a as
+\end{verbatim}
+\noindent The idea is that the function is like the standard \verb|map| function
+on lists, except that here, the function \verb|f| that we are mapping (or ``mapping
+through'') takes in not just the current element \verb|a|, but also the tail \verb|as|.
+It then returns the value \verb|b| to include in the output list, and whatever other
+list it wishes, upon which \verb|mapThrough| will recurse.
+
+We can write this combinatory using our infrastructure for subsidiary recursion.
+For this to work, we need to supply the mapped function with the fold function
+for \verb|mapThrough|'s recursion.  This is so that the mapped function can
+initiate a subsidiary recursion, returning a value in the abstract type \verb|R|
+of \verb|mapThrough|'s recursion.  So the type we will use for mapped functions
+is:
+\begin{verbatim}
+Definition mappedT(A B : Set) : Set :=
+  forall(R : Set)(fo:FoldT (Alg (ListF A)) R), A -> R -> B * R.
+\end{verbatim}
+\noindent This type is more informative than the Haskell type,
+since it shows that the second component of the returned value
+must have type \verb|R|, and hence must be (hereditarily) a tail
+of the input of type \verb|R|.
+
+Given this definition, the code for \verb|mapThrough| and
+\verb|mapThroughr| is in Figure~\ref{fig:mapthrough}.  The code for
+\verb|MapThroughAlg| is very similar (discounting syntax) to the
+Haskell code above.  Here, though, when we call \verb|f|, we must
+supply the abstract type \verb|R| and fold function \verb|fo|.  Then,
+from the definition of \verb|mappedT|, we have that \verb|b : B| and
+\verb|c : R|.  So we may indeed invoke \verb|mapThrough : R -> List B|
+on \verb|c|.  Note that as we are building up a new list from scratch
+(rather than just extracting some tail of the input list), we just
+return \verb|list B|; we cannot perform further subsidiary recursion
+on the output.  
+
+\begin{figure}
+\begin{verbatim}
+Definition MapThroughAlg{B : Set}(f:mappedT A B)
+           (C : Set) : Alg (ListF A) C (Const (list B)) :=
+  rollAlg (fun R reveal fo mapThrough xs => 
+    match xs with
+      Nil => []
+    | Cons hd tl =>
+      let (b,c) := f R fo hd tl in
+        b :: mapThrough c
+    end).
+
+Definition mapThroughr{R : Set}(fo:FoldT (Alg (ListF A)) R)
+                      {B : Set}(f:mappedT A B) : R -> list B :=
+  fo (Const (list B)) (FunConst (list B)) (MapThroughAlg f R).
+
+Definition mapThrough{B : Set}(f:mappedT A B) : List A -> list B :=
+  mapThroughr (fold (ListF A)) f.
+\end{verbatim}
+\caption{The \texttt{mapThrough} and \texttt{mapThroughr} functions,
+  with their defining algebra}
+\label{fig:mapthrough}
+\end{figure}
+
+\subsection{Run-length encoding}
+
+Using \verb|mapThrough|, we can write a quite concise function for
+\emph{run-length encoding}, a basic data-compression algorithm where
+maximal sequences of $n$ occurrences of element $e$ are summarized by
+the pair $(n,e)$~\cite{datacomp}.  In Haskell, invoking \verb|span| and
+\verb|mapThrough| (defined above), the code is simply
+\begin{verbatim}
+rle :: Eq a => [a] -> [(Int,a)]
+rle = mapThrough compressSpan
+  where compressSpan a as =
+          let (p,s) = span (== a) as in
+            ((1 + length p, a),s)
+\end{verbatim} 
+\noindent (Recall that \verb|(== a)| is a Haskell \emph{section}
+testing its input for equality with \verb|a|.)  The
+\verb|compressSpan| helper function gathers up all elements at the
+start of the tail \verb|as| that are equal to the head \verb|a|.  This
+prefix is returned as \verb|p|, with the remaining suffix as \verb|s|.
+The pair \verb|(1 + length p, a)| is returned to summarize
+\verb|a :: p|.  We then use \verb|mapThrough| to iterate
+\verb|compressSpan| through the suffix \verb|s|.
+
+Assuming \verb|A : Set| and an equality test \verb|eqb : A -> A -> bool| on it,
+code for run-length encoding using our infrastructure is listed in Figure~\ref{fig:rle}.
+The function \verb|compressSpan| is written at the type \verb|mappedT A (nat * A)| that
+will be required by \verb|mapThrough|.  Unfolding the definition of \verb|mappedT|,
+\verb|compressSpan| has type:
+\begin{verbatim}
+forall(R : Set)(fo:FoldT (Alg (ListF A)) R), A -> R -> (nat * A) * R.
+\end{verbatim}
+\noindent It will be invoked by the code for \verb|mapThrough| with a
+fold function \verb|fo| with anchor type \verb|R|, and then has the
+responsibility of mapping the tail at type \verb|R| (second input) to
+a result upon which \verb|mapThrough| should recurse (second component
+of the output pair).  Then we define an algebra \verb|RleAlg| by
+supplying \verb|compressSpan| as the function to map through, to
+\verb|MapThroughAlg| (Figure~\ref{fig:mapthrough}).  Following the
+pattern we have seen in all the examples above, we may then define
+function \verb|mapThroughr| for subsidiary recursions, and
+\verb|mapThrough| for top-level recursions.
+
+
+
+\begin{figure}
+\begin{verbatim}
+Definition compressSpan : mappedT A (nat * A) :=
+  fun R fo hd tl => 
+    let (p,s) := spanr fo (eqb hd) tl in
+       ((succ (length p),hd), s).
+
+Definition RleCarr := Const (list (nat * A)).
+Definition RleAlg(C : Set) : Alg (ListF A) C RleCarr :=
+  MapThroughAlg compressSpan C.
+
+Definition rle(xs : List A) : list (nat * A)
+  := @fold (ListF A) RleCarr (FunConst (list (nat * A))) (RleAlg (List A)) xs.
+\end{verbatim}
+\caption{The function \texttt{rle} for run-length encoding, and the algebra \texttt{RleAlg} defining it
+in terms of \texttt{MapThroughAlg} (Figure~\ref{fig:mapthrough})}
+\label{fig:rle}
 \end{figure}
 
 
