@@ -265,6 +265,7 @@ Inductive ListF(X : Set) : Set :=
 | Nil : ListF X
 | Cons : A -> X -> ListF X.
 
+Definition List := Subrec ListF .
 Definition inList : ListF List -> List := inn ListF.
 Definition mkNil : List := inList Nil.
 Definition mkCons (hd : A) (tl : List) : List := inList (Cons hd tl).
@@ -297,14 +298,15 @@ Definition fromList : List -> list A.
   general, to use our development to get subsidiary recursion over
   some datatype, one will have a similar ``shim'' file.  The file
   defines the signature functor \verb|ListF|, shown in
-  Figure~\ref{fig:listf}.  Using \verb|Subrec|, we then get a type
-  \verb|List|.  This is not to be confused with the type \verb|list|
-  of lists in Coq's standard library.  As noted previously, our
-  development is meant to be used in extension of existing inductive
-  datatypes, not replacing them.  The figure also shows constructors
-  \verb|mkNil| and \verb|mkCons| for \verb|List|, and types for
-  conversion functions between \verb|List| and \verb|list| (see
-  Section~\ref{sec:deriv} for the code).
+  Figure~\ref{fig:listf}.  We then define \verb|List| to be
+  \verb|Subrec|, with the instantiation of \verb|F| to \verb|ListF A|.
+  This type \verb|List| is not to be confused with the type
+  \verb|list| of lists in Coq's standard library.  As noted
+  previously, our development is meant to be used in extension of
+  existing inductive datatypes, not replacing them.  The figure also
+  shows constructors \verb|mkNil| and \verb|mkCons| for \verb|List|,
+  and types for conversion functions between \verb|List| and
+  \verb|list| (see Section~\ref{sec:deriv} for the code).
   
 
 \subsection{Algebras for subsidiary recursion}
@@ -630,7 +632,7 @@ through'') takes in not just the current element \verb|a|, but also the tail \ve
 It then returns the value \verb|b| to include in the output list, and whatever other
 list it wishes, upon which \verb|mapThrough| will recurse.
 
-We can write this combinatory using our infrastructure for subsidiary recursion.
+We can write this combinator using our infrastructure for subsidiary recursion.
 For this to work, we need to supply the mapped function with the fold function
 for \verb|mapThrough|'s recursion.  This is so that the mapped function can
 initiate a subsidiary recursion, returning a value in the abstract type \verb|R|
@@ -683,7 +685,7 @@ Definition mapThrough{B : Set}(f:mappedT A B) : List A -> list B :=
 
 \subsection{Run-length encoding (\texttt{Rle.v})}
 
-Using \verb|mapThrough|, we can write a quite concise function for
+Using \verb|mapThrough|, we can quite concisely implement
 \emph{run-length encoding}, a basic data-compression algorithm where
 maximal sequences of $n$ occurrences of element $e$ are summarized by
 the pair $(n,e)$~\cite{datacomp}.  In Haskell, invoking \verb|span| and
@@ -744,22 +746,27 @@ in terms of \texttt{MapThroughAlg} (Figure~\ref{fig:mapthrough})}
 \label{fig:rle}
 \end{figure}
 
-
 \section{Derivation of subsidiary recursion}
 \label{sec:deriv}
+
+Let us now consider the implementation of the
+interface we have used for the preceding examples.
+The first step is our weakened form of positive-recursive
+types.
 
 \subsection{Retractive-positive recursive types}
 \label{sec:mu}
 
 As we have seen, our definitions require a form of positive-recursive
 types, to allow algebras to accept fold functions that themselves
-require algebras, and also for the definition of \verb|Subrec|.  But
-as recalled already, full positive-recursive types are incompatible
-with Coq's type theory~\cite{coquand88}.  It is worth noting that one
-can impose some restrictions on large eliminations which then allow
-positive-recursive types~\cite{blanqui05}.  This approach would
-require changing the underlying theory.  To avoid this, we here take a
-different approach, exploiting Coq's impredicative polymorphism.
+require algebras, and also for the definition of \verb|Subrec| (which
+we will see in more detail in the next section).  As already noted,
+full positive-recursive types are incompatible with Coq's type
+theory~\cite{coquand88}.  One can impose some restrictions on large
+eliminations which then enable positive-recursive
+types~\cite{blanqui05}.  This approach would require changing the
+underlying theory.  To avoid this, we here take a different approach,
+exploiting Coq's impredicative polymorphism.
 
 This is done in a file \verb|Mu.v|, whose central definitions are in
 Figure~\ref{fig:mu}.  The development is parametrized by
@@ -856,10 +863,70 @@ Then \verb|mkNil| and \verb|mkNil'| will have the same normal form,
 and be equivalent in that sense.  But the fact that they are not
 provably equal is what we term noncanonicity.
 
-Noncanonicity leads to some issues, as we turn next to the problem of
-inductive reasoning about subsidiary recursions.  With some care,
-however, we can avoid pitfalls, leaving us with a form of
-positive-recursive type that enables our definitions to go through.
+Noncanonicity must be handled carefully when reasoning about functions
+defined with our interface.  We will see examples in
+Section~\ref{sec:examplesi}.  First, though, let us complete the
+exposition of our implementation of subsidiary recursion.
+
+\subsection{The implementation of \texttt{Subrec} (\texttt{Subrec.v})}
+
+The type \verb|Subrec| is defined in Figure~\ref{fig:subrec}, as a
+fixed-point of \verb|SubrecF : Set -> Set|.  We take this fixed-point
+with \verb|Mu|, discussed in the previous section, and obtain \verb|roll|
+and \verb|unroll| functions between \verb|SubrecF Subrec| and \verb|Subrec|.
+Unrolling \verb|Subrec| gives us the type
+\begin{verbatim}
+forall (X : Set -> Set) (FunX : Functor X), Alg Subrec X -> X Subrec
+\end{verbatim}
+\noindent So we see that \verb|Subrec| is the type of functions which,
+for all algebras with anchor type \verb|Subrec| and functorial carrier
+\verb|X|, compute a value of type \verb|X Subrec|.  This is a generalization
+of the functor-generic type for the Church encoding:
+\[
+\forall\ X.\ \textit{Alg}\ X \to X
+\]
+\noindent where $\textit{Alg}\ X$ is $F\ X \to X$.  
+We elide the implementation of the \verb|roll| and \verb|unroll| functions, but
+note that \verb|unroll| makes use of functoriality of carriers \verb|X|.
+
+\begin{figure}
+\begin{verbatim}
+Definition SubrecF(C : Set) := 
+  forall (X : Set -> Set) (FunX : Functor X), Alg C X -> X C.
+Definition Subrec := Mu SubrecF.
+Definition roll: SubrecF Subrec -> Subrec.
+Definition unroll: Subrec -> SubrecF Subrec.
+\end{verbatim}
+\caption{Definition of \texttt{Subrec} as a fixed-point of \texttt{SubrecF}}
+\label{fig:subrec}
+\end{figure}
+
+The rest of the interface for \verb|Subrec| is shown in
+Figure~\ref{fig:subrecb}.  We have \verb|fold|, which is a fold
+function with anchor type \verb|Subrec|.  To fold an algebra
+\verb|alg| with carrier \verb|X| (with \verb|fmap| function given by
+\verb|FunX|) over \verb|d : Subrec|, \verb|fold| \verb|unroll|s the
+definition of \verb|Subrec| and applies that to the algebra (with its
+carrier).
+
+More interesting is the definition of \verb|inn|.
+
+\begin{figure}
+\begin{verbatim}
+Definition fold : FoldT Alg Subrec := 
+  fun X FunX alg d => unroll d X FunX alg.
+
+Definition inn : F Subrec -> Subrec :=
+  fun d => roll (fun X xmap alg =>
+                 unrollAlg alg Subrec (fun x => x) fold (fold X xmap alg) d).
+
+Definition out{R:Set}(fo:FoldT Alg R) : R -> F R :=
+  fo F FunF (rollAlg (fun _ _ _ _ d => d)).
+\end{verbatim}
+\caption{The rest of the interface for \texttt{Subrec}}
+\label{fig:subrecb}
+\end{figure}
+
 
 \section{Interface for subsidiary induction}
 \label{sec:interfacei}
@@ -893,7 +960,7 @@ recursively defined function.
 
 Mendler introduced the basic idea of using universal abstraction to
 support compositional termination checking; an accessible source
-is~\cite{mendler91}.  This recursor has type
+is~\cite{mendler91}.  He introduces a functor-generic recursor of type
 \[
 \all{X}{(\all{R}{(R \to X) \to F\ R \to X}) \to \mu\ F\ \to X}
 \]
