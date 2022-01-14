@@ -63,7 +63,7 @@ Section List.
       | (hd :: tl) => Cons hd tl
       end.
   
-  Definition List := @Subrec ListF .
+  Definition List := Subrec ListF .
 
   (* -------------------------------------------------------------------------------- *)
   (* Smart constructors for List as Initial Carrier. *)
@@ -123,10 +123,9 @@ Section List.
   Theorem inj : forall (xs : list A), fromList (toList xs) = xs.
     induction xs.
     - simpl. auto.
-    - replace (fromList (toList (a :: xs))) with (cons a (fromList (toList xs))).
+    - change (fromList (toList (a :: xs))) with (cons a (fromList (toList xs))).
       rewrite IHxs.
       reflexivity.
-      auto.
   Qed.
         
   Definition ForaL(P : A -> Prop)(l : List) : Prop := Forall P (fromList l).
