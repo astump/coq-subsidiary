@@ -154,14 +154,12 @@ subsidiary recursion and induction in Coq.  We should emphasize that
 this is a derivation of this recursion scheme within the type theory
 of Coq.  No axioms or other modifications to Coq of any kind are
 required. Based on this derivation, we present several example
-functions like \verb|wordsBy|, and prove theorems about them.  For
-example, we prove the expected property that the sublists returned by
-\verb|wordsBy| consist of elements satisfying \verb|not . p|.
-For another, we give a definition of run-length encoding as a
-subsidiary recursion using \verb|span|, and prove that encoding and
-then decoding returns the original list.  Our approach applies to the
-standard datatypes in the Coq library, and does not require switching
-libraries or datatype definitions.
+functions like \verb|wordsBy|, and prove theorems about them.  A nice
+example is a definition of run-length encoding using \verb|span| as a
+subsidiary recursion, where we prove that encoding and then decoding
+returns the original list.  Our approach applies to the standard
+datatypes in the Coq library, and does not require switching libraries
+or datatype definitions.
 
 An important technical novelty of our approach is a derivation of a
 weakened form of positive-recursive type in Coq.  Coq (Agda, and Lean)
@@ -207,6 +205,7 @@ This section presents the interface our Coq development provides
 for subsidiary recursion.
 
 \subsection{The recursion universe}
+\label{sec:recu}
 
 Our approach is within a long line of work using ideas from universal
 algebra and category theory to describe inductive datatypes and their
@@ -296,7 +295,8 @@ Definition fromList : List -> list A.
   This file specializes the development in \verb|Subrec.v| to the case
   of lists (parametrized by the type \verb|A| of elements).  In
   general, to use our development to get subsidiary recursion over
-  some datatype, one will have a similar ``shim'' file.  The file
+  some datatype, one will have a similar ``shim'' file.  For space
+  reasons, we just give the example of lists.  The file
   defines the signature functor \verb|ListF|, shown in
   Figure~\ref{fig:listf}.  We then define \verb|List| to be
   \verb|Subrec|, with the instantiation of \verb|F| to \verb|ListF A|.
@@ -869,6 +869,7 @@ Section~\ref{sec:examplesi}.  First, though, let us complete the
 exposition of our implementation of subsidiary recursion.
 
 \subsection{The implementation of \texttt{Subrec} (\texttt{Subrec.v})}
+\label{sec:subrecimpl}
 
 The type \verb|Subrec| is defined in Figure~\ref{fig:subrec}, as a
 fixed-point of \verb|SubrecF : Set -> Set|.  We take this fixed-point
@@ -909,7 +910,37 @@ function with anchor type \verb|Subrec|.  To fold an algebra
 definition of \verb|Subrec| and applies that to the algebra (with its
 carrier).
 
-More interesting is the definition of \verb|inn|.
+More interesting is the definition of \verb|inn|, which is the
+critical point where the recursion universe is implemented.  To create
+a value of type \verb|Subrec| from data of type \verb|F Subrec|, the
+definition of \verb|inn| \verb|roll|s a value of type
+\verb|SubrecF Subrec| (we saw this type unfolded at the start of
+Section~\ref{sec:subrecimpl}).  This value takes in a carrier
+\verb|X|, its fmap function \verb|xmap|, and an algebra \verb|alg|
+with that carrier.  Note that the anchor type of this algebra is
+\verb|Subrec|.  It will then call \verb|alg| (after \verb|unroll|ing
+it) with implementations for the components of the recursion universe
+(cf. Section~\ref{sec:recu}, also Figure~\ref{fig:algf}):
+\begin{itemize}
+\item \verb|Subrec| is passed as the value for the abstract type \verb|R|.
+\item the identity function is passed as the value for \verb|reveal : R -> Subrec| (since \verb|R| has
+  been instantiated to \verb|Subrec|).
+\item The function \verb|fold|, which expects an algebra with anchor type \verb|Subrec|, is passed as
+  the fold function of type \verb|FoldT Alg R|.
+\item For the \verb|eval : R -> X R| function, we pass \verb|(fold X xmap alg) : Subrec -> X Subrec|.
+\item For the subdata structure of type \verb|F R|, we pass \verb|d : F Subrec| (again, since we
+  are instantiating \verb|R| with \verb|Subrec|).
+\end{itemize}
+
+Finally, Figure~\ref{fig:subrecb} defines \verb|out| as a subsidiary
+recursion, given any fold function with its anchor type \verb|R|.  The
+code for \verb|out| just folds an algebra over the input of type
+\verb|R|, where that algebra simply returns the subdata structure it
+is given.  Outside the recusion, this has type \verb|F R|; inside the
+recursion it has type \verb|F R'| where \verb|R'| is the abstract type
+of the subsidiary recursion (named in the figure just for discussion
+here).  So \verb|out| implements the idea that unfolding an abstract
+type one step is just a trivial case of subsidiary recursion.
 
 \begin{figure}
 \begin{verbatim}
@@ -921,18 +952,210 @@ Definition inn : F Subrec -> Subrec :=
                  unrollAlg alg Subrec (fun x => x) fold (fold X xmap alg) d).
 
 Definition out{R:Set}(fo:FoldT Alg R) : R -> F R :=
-  fo F FunF (rollAlg (fun _ _ _ _ d => d)).
+  fo F FunF (rollAlg (fun R' _ _ _ d => d)).
 \end{verbatim}
 \caption{The rest of the interface for \texttt{Subrec}}
 \label{fig:subrecb}
 \end{figure}
 
+\subsection{Converting between \texttt{list} and \texttt{List} (\texttt{List.v})}
 
-\section{Interface for subsidiary induction}
+Figure~\ref{fig:listb} gives the definitions (specified in
+Figure~\ref{fig:listf} above) for conversion functions between
+\texttt{list} (the list type of Coq's standard library) and our
+\texttt{List} type for subsidiary recursion on lists.  To convert a
+\verb|list| to a \verb|List|, we use \verb|listFold| to recursively
+apply the function \verb|inn| (Figure~\ref{fig:subrecb}) throughout a
+\verb|list|.  This \verb|listFold| provides a functorial view of the
+usual fold-right function on lists.  To convert a \verb|List| to a
+\verb|list|, we use our \verb|fold| function
+(Figure~\ref{fig:subrecb}) to fold an algebra over the input
+\verb|List|.  This algebra does an \verb|fmap| (for \verb|ListF|) with
+\verb|eval : R -> list A|.  The resulting value has type
+\verb|ListF (list A)|.  We may then apply \verb|listIn| to produce a
+\verb|list A|.  This \verb|listIn| function converts from
+\verb|ListF (list A)| to \verb|list A| in the obvious way, converting
+\verb|Nil| to the empty list, and \verb|Cons| to an application of
+\verb|::|.  These functions were not necessary in implementing
+examples of subsidiary recursion above, but they will be needed
+for reasoning about them.  We turn to this topic next.
+
+\begin{figure}
+\begin{verbatim}
+Fixpoint listFold(l : list A){X : Set}(alg : ListF X -> X) : X :=
+  match l with
+    nil => alg Nil
+  | cons hd tl => alg (Cons hd (listFold tl alg))
+  end.
+
+Definition toList (xs : list A) : List := listFold xs (inn ListF).
+
+Definition listIn(d : ListF (list A)) : list A :=
+  match d with
+    Nil => []
+  | Cons hd tl => hd :: tl
+  end.
+
+Definition fromList : List -> list A :=
+  fold ListF (Const (list A)) (FunConst (list A))
+       (rollAlg (fun R reveal fo eval fr => listIn (fmap eval fr))) .
+\end{verbatim}
+\caption{Additional functions for the \texttt{List} type (\texttt{Subrec ListF})}
+\label{fig:listb}
+\end{figure}
+
+\section{Interface for subsidiary induction (\texttt{Subreci.v})}
 \label{sec:interfacei}
+
+We have seen how to write subsidiary recursions in Coq.  But can one
+reason about these?  To wrap up this paper, we will see an interface
+for subsidiary induction in Coq, and example proofs written using this
+interface.  Subsidiary induction is written just as the natural
+extension of subsidiary recursion, which worked over \verb|Set|s, to
+\verb|Subrec|-predicates.  The development is parametrized by a
+functor \verb|F| and a functor
+\verb|Fi : (Subrec -> Prop) -> (Subrec -> Prop)| over
+\verb|Subrec|-indexed propositions (i.e., predicates).  Just as
+functors need an \verb|fmap| function, we here need an indexed
+version, of type \verb|fmapiT Subrec Fi| (definition elided.)
+
+The central definitions for the type \verb|Subreci : Subrec -> Prop|
+are given in Figure~\ref{fig:subreci}.  Where having a value \verb|x|
+of \verb|Subrec| entitles us to define subsidiary recursions to
+inhabit types \verb|X Subrec|, a value of type \verb|Subreci x| lets
+us prove properties of \verb|x| by subsidiary induction.  Briefly:
+\verb|kMo| is the kind for \emph{motives}, namely predicates on
+\verb|Subrec|~\cite{mcbride00}.  \verb|KAlgi| is the kind for indexed
+algebras.  \verb|FoldTi| is the indexed version of \verb|FoldT|: it is
+expresses provability of \verb|X C| for \verb|d|, based on an indexed
+algebra and a value of type \verb|C d|, where \verb|C| is the anchor
+type, now indexed.  \verb|AlgFi| and \verb|Algi| are indexed versions
+of the algebras we saw for recursion.  The \verb|eval| function
+(Figure~\ref{fig:algf}) has now become an induction hypothesis: given
+any \verb|d| where \verb|R d| holds, \verb|ih| proves \verb|X R d|.  A
+value of type \verb|R d| is thus a license to induct on \verb|d|.
+Finally, the algebra is given a subdata structure indexed by
+\verb|d : Subrec|, and must produce a proof of \verb|X R d|.  \verb|Subreci|
+is defined as the suitably indexed fixed-point of \verb|SubrecFi|, which
+is the natural indexed version of \verb|SubrecF|.
+
+
+\begin{figure}
+\begin{verbatim}
+Definition kMo := Subrec -> Prop.
+Definition KAlgi := kMo -> (kMo -> kMo) -> Set.
+Definition FoldTi(alg : KAlgi)(C : kMo) : kMo :=
+  fun d => forall (X : kMo -> kMo) (xmap : fmapiT Subrec X), alg C X -> C d -> X C d.
+
+Definition AlgFi(A: KAlgi)(C : kMo)(X : kMo -> kMo) : Set :=
+  forall (R : kMo)
+    (reveal : (forall (d : Subrec), R d -> C d))        
+    (fo : (forall (d : Subrec), FoldTi A R d))
+    (ih : (forall (d : Subrec), R d -> X R d))
+    (d : Subrec),
+    Fi R d -> X R d.
+
+Definition Algi := MuAlgi Subrec AlgFi.
+
+Definition SubrecFi(C : kMo) : kMo := 
+  fun d => forall (X : kMo -> kMo) (xmap : fmapiT Subrec X), Algi C X -> X C d.
+Definition Subreci := Mui Subrec SubrecFi.
+
+Definition foldi(i : Subrec) : FoldTi Algi Subreci i.
+Definition inni(i : Subrec)(fd : Fi Subreci i) : Subreci i.
+\end{verbatim}
+\caption{Interface for subsidiary induction}
+\label{fig:subreci}
+\end{figure}
+
+For lists, we instantiate \verb|Fi| with \verb|ListFi|, shown in
+Figure~\ref{fig:listfi}.  This is just the indexed version of
+\verb|ListF|.  Given a \verb|list A|, \verb|toListi| returns
+a value of type \verb|Listi (toList xs)|.  This can be understood
+as saying that for any list (from Coq's standard library),
+we can reason by subsidiary induction to prove properties of \verb|toList xs|.
+We also introduce an abbreviation \verb|ListFoldTi| for the type
+of indexed fold functions over lists.
+
+\begin{figure}
+\begin{verbatim}
+Definition lkMo := List -> Prop.
+
+Inductive ListFi(R : lkMo) : lkMo :=
+  nilFi : ListFi R mkNil
+| consFi : forall (h : A)(t : List), R t -> ListFi R (mkCons h t).
+
+Definition Listi := Subreci ListF ListFi.
+Definition toListi(xs : list A) : Listi (toList xs) := listFoldi xs Listi inni.
+Definition ListFoldTi(R : List -> Prop)(d : List) : Prop :=
+  FoldTi ListF (Algi ListF ListFi) R d.
+\end{verbatim}
+\caption{The indexed version \texttt{ListFi} of \texttt{ListF}}
+\label{fig:listfi}
+\end{figure}
 
 \section{Examples of subsidiary induction}
 \label{sec:examplesi}
+
+For proving the main theorem about run-length encoding, we need
+several lemmas about \verb|span|, shown in Figure~\ref{fig:spanlem}.
+For lack of space, we just state the properties.  The first says that
+appending the results of a call to span returns the original list
+(module some conversions to \verb|list| from \verb|List|).  The second
+uses the inductive type \verb|Forall| from Coq's standard library to
+state that all the elements of the prefix returned by \verb|span|
+satisfy \verb|p|.  These lemmas are proved using an indexed algebra
+where the indexed anchor type is not used (so the carriers are
+constant indexed-functor returning the types shown).  But for the
+third, \verb|GuardPres|, we are showing that whenever \verb|spanh|
+(see Figure~\ref{fig:span}) returns a suffix \verb|r|, that suffix
+satisfies the indexed anchor type.  This enables us to invoke an
+outer induction hypothesis on this suffix, when using \verb|span|
+subsidiarily.
+
+\begin{figure}
+\begin{verbatim}
+Definition SpanAppendF(p : A -> bool)(xs : List A) : Prop :=
+  forall (l : list A)(r : List A) ,
+    span p xs = (l,r) ->
+    fromList xs = l ++ (fromList r).
+
+Definition spanForallF(p : A -> bool)(xs : List A) : Prop :=
+  forall (l : list A)(r : List A),
+    span p xs = (l,r) ->
+    Forall (fun a => p a = true) l.
+
+Definition GuardPresF(p : A -> bool)(S : List A -> Prop)(xs : List A) : Prop :=
+  forall (l : list A)(r : List A),
+    spanh p xs = SpanSomeMatch l r ->
+    S r.
+\end{verbatim}
+\caption{Statements of three lemmas about \texttt{span}}
+\label{fig:spanlem}
+\end{figure}
+
+Using these lemmas, we can write a short proof by subsidiary induction of:
+
+\begin{verbatim}
+Theorem RldRle (xs : list A): rld (rle (toList xs)) = xs.  
+\end{verbatim}
+
+Finally, as promised, a note on noncanonicity. When proving properties about subsidiary
+recursions on \verb|xs : List A|, one should be aware that nothing prevents
+the property from being applied to noncanonical \verb|List|s.  For example,
+suppose we wish to prove that if all elements of a  list satisfy \verb|p|, then
+the suffix returned by \verb|span| is empty.  It is dangerous to phrase
+this as ``the suffix equals \verb|mkNil|'', because for a noncanonical input \verb|xs|,
+\verb|span| will return that same  noncanonical \verb|xs| as the suffix (and so
+it may be a noncanonical empty list, not equal to \verb|mkNil|).  The solution
+in this case is to use a function \verb|getNil| (\verb|List.v|) that computes
+an empty list from \verb|xs|.  So the statement that one can prove is:
+
+\begin{verbatim}
+Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
+  Forall (fun a => p a = true) (fromList xs) ->
+  span p xs = (fromList xs, getNil xs).
+\end{verbatim}
 
 \section{Related Work}
 \label{sec:related}
@@ -969,6 +1192,8 @@ is~\cite{mendler91}.  He introduces a functor-generic recursor of type
 categorical perspective on Mendler-style recursion~\cite{uustalu99}.
 Others have explored the possibility of using it with negative type
 schemes~\cite{ahn11}.
+
+\section{Conclusion}
 
 \bibliography{biblio}
 

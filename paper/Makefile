@@ -3,3 +3,6 @@ paper.pdf: paper.tex Makefile biblio.bib
 	bibtex paper
 	pdflatex paper
 	pdflatex paper
+
+clean:
+	rm -f paper.aux paper.bbl paper.log paper.pdf paper.out paper.blg
