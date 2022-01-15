@@ -48,7 +48,7 @@ Section Subreci.
 (* -------------------------------------------------------------------------------- *)
 
 
-Definition AlgF(A: KAlgi)(C : kMo)(X : kMo -> kMo) : Set :=
+Definition AlgFi(A: KAlgi)(C : kMo)(X : kMo -> kMo) : Set :=
   forall (R : kMo)
     (reveal : (forall (d : Subrec), R d -> C d))        
     (fo : (forall (d : Subrec), FoldTi A R d))
@@ -56,20 +56,20 @@ Definition AlgF(A: KAlgi)(C : kMo)(X : kMo -> kMo) : Set :=
     (d : Subrec),
     Fi R d -> X R d.
 
-Definition Algi := MuAlgi Subrec AlgF.
+Definition Algi := MuAlgi Subrec AlgFi.
 
 Definition monoAlgi : forall (A B : KAlgi),
     CastAlgi Subrec A B ->
-    CastAlgi Subrec (AlgF A) (AlgF B) :=
+    CastAlgi Subrec (AlgFi A) (AlgFi B) :=
   fun A B cAB =>
     fun C X algf R reveal fo  =>
       algf R reveal (fun i' X xmap alg => fo i' X xmap (cAB _ _ alg)).
 
-Definition rollAlgi : forall {C : kMo} {X : kMo -> kMo}, AlgF Algi C X -> Algi C X :=
- fun C X i => inMuAlgi Subrec AlgF i.
+Definition rollAlgi : forall {C : kMo} {X : kMo -> kMo}, AlgFi Algi C X -> Algi C X :=
+ fun C X i => inMuAlgi Subrec AlgFi i.
 
-Definition unrollAlgi : forall {C : kMo} {X : kMo -> kMo}, Algi C X -> AlgF Algi C X :=
-  fun C X => outMuAlgi Subrec AlgF monoAlgi.
+Definition unrollAlgi : forall {C : kMo} {X : kMo -> kMo}, Algi C X -> AlgFi Algi C X :=
+  fun C X => outMuAlgi Subrec AlgFi monoAlgi.
 
 Definition antiAlgi : forall {A B : kMo} {X : kMo -> kMo},
     (forall (i : Subrec), (A i -> B i)) -> Algi B X -> Algi A X :=

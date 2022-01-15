@@ -128,13 +128,10 @@ Section List.
       reflexivity.
   Qed.
         
-  Definition ForaL(P : A -> Prop)(l : List) : Prop := Forall P (fromList l).
-
   (* -------------------------------------------------------------------------------- *)
   (* Some basic list operations *)
   (* -------------------------------------------------------------------------------- *)
 
-  (* this used to be an Alg, but I need an SAlg other places -- Aaron *)
   Definition LengthAlg(C : Set) : Alg ListF C (Const nat) :=
    rollAlg
    (fun _ _ _ eval xs =>
@@ -226,6 +223,9 @@ Section List.
   Definition toListi(xs : list A) : Listi (toList xs) := listFoldi xs Listi inni.
   Definition listAlgi := Algi ListF ListFi.
 
+  Definition ListFoldTi(R : List -> Prop)(d : List) : Prop :=
+    FoldTi ListF (Algi ListF ListFi) R d.
+
 End List.
 
 Arguments Nil {A} {X}.
@@ -242,7 +242,7 @@ Arguments getNil{A}.
 Arguments getNilh{A}.
 Arguments ListFi {A} R xs.
 
-Arguments ForaL {A} P l.
+Arguments ListFoldTi{A}.
 
 Definition ex  : list nat := [1 ; 2 ; 3 ; 4 ; 5 ; 6].
 Definition ex' : List nat := (toList ex).

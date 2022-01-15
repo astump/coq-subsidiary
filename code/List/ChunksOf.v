@@ -20,33 +20,29 @@ Section ChunksOf.
   
   (* this assumes that s is the predecessor of the desired chunk size *)
   Definition ChunksOf(s : nat)(C : Set)
-    : Alg (ListF A) C (Const (List (list A))) :=
+    : Alg (ListF A) C (Const (list (list A))) :=
     MapThroughAlg (fun R fo hd tl => let (l,r) := splitAtr fo s tl in (hd :: l, r)) C.
 
   Definition chunksOfr{R : Set}(fo:FoldT (Alg (ListF A)) R)
-                      (s : nat)(xs : R) : List (list A) :=
+                      (s : nat)(xs : R) : list (list A) :=
     match s with
-      O => mkNil
+      O => []
     | S n =>
-      fo (Const (List (list A))) (FunConst (List (list A))) (ChunksOf n R) xs
+      fo (Const (list (list A))) (FunConst (list (list A))) (ChunksOf n R) xs
     end.
 
-  Definition chunksOf : nat -> List A -> List (list A) :=
+  Definition chunksOf : nat -> List A -> list (list A) :=
     chunksOfr (fold (ListF A)).
-
-  Definition chunksOfl(s : nat)(l : list A) : list (list A) :=
-    fromList (chunksOfr (fold (ListF A)) s (toList l)).
 
 End ChunksOf.
 
 Arguments chunksOfr{A}{R}.
-Arguments chunksOf{A}{R}.
-Arguments chunksOfl{A}.
+Arguments chunksOf{A}.
 
 (* testcases *)
 
-Definition test := chunksOfl 0 (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: []).
-Definition test2 := chunksOfl 3 (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: []).
+Definition test := chunksOf 0 (toList (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: [])).
+Definition test2 := chunksOf 3 (toList (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: [])).
 
 Eval compute in test.
 Eval compute in test2.

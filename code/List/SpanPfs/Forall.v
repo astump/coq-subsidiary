@@ -47,7 +47,7 @@ Definition spanForall{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A
            (p : A -> bool)(xs : List A)(rxs : R xs) : spanForallF p xs :=
   foi xs (Consti (spanForallF p)) (FunConsti (spanForallF p)) (SpanForall p R) rxs.
 
-(*
+
 Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
   Forallb p (fromList xs) ->
   span p xs = (fromList xs, getNil xs).
@@ -87,8 +87,8 @@ Qed.
 Definition spanForall2{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
            (p : A -> bool)(xs : List A)(rxs : R xs) : spanForall2F p xs :=
   foi xs (Consti (spanForall2F p)) (FunConsti (spanForall2F p)) (SpanForall2 p R) rxs.
-*)
+
 End spanForall.
 
 Arguments spanForall{A}{R} foi p xs rxs {l}{r}.
-(*Arguments spanForall2{A}{R}.*)
+Arguments spanForall2{A}{R}.
