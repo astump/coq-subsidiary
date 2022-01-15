@@ -50,8 +50,9 @@ Definition guardPresh{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A
                     (p : A -> bool)(xs : List A)(rxs : R xs) : GuardPresF p R xs
  := foi xs (GuardPresF p) (GuardPresFuni p) (GuardPresh p R) rxs.
 
-Lemma guardPres{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
-      (p : A -> bool)(xs : List A)(rxs : R xs)(l:list A)(r : List A)(e: span p xs = (l,r)) : R r.
+Lemma guardPres{R : List A -> Prop}(foi:forall d : List A, ListFoldTi R d)
+      (p : A -> bool)(xs : List A)(rxs : R xs)
+      (l:list A)(r : List A)(e: span p xs = (l,r)) : R r.
  unfold span,spanr in e.
  destruct (spanhr (fold (ListF A)) p xs) eqn:e'; inversion e; rewrite <- H1.
  + assumption. 
