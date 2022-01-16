@@ -742,7 +742,7 @@ interface we have used for the preceding examples.
 The first step is our weakened form of positive-recursive
 types.
 
-\subsection{Retractive-positive recursive types}
+\subsection{Retractive-positive recursive types (\texttt{Mu.v})}
 \label{sec:mu}
 
 As we have seen, our definitions require a form of positive-recursive
@@ -1116,40 +1116,56 @@ Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
 \section{Related Work}
 \label{sec:related}
 
-\textbf{Termination.}
-In some tools, like Coq, Agda, and Lean, termination is checked
-statically, based on structural decrease at recursive calls.  Others,
-like Isabelle/HOL, allow one to write recursions first, and prove
-(possibly with automated help) their termination
-afterwards~\cite{krauss}.
-
-It has not escaped the notice of designers of ITPs that structural
-recursion is not the only form of terminating recursion.  All the
-mentioned tools provide support for well-founded recursion, where for
-recursive calls, one must show that the parameter of recursion has
-decreased in some well-founded order.
+\textbf{Termination.}  In some tools, like Coq, Agda, and Lean,
+termination is checked statically, based on structural decrease.
+Others, like Isabelle/HOL, allow one to write recursions first, and
+prove (possibly with automated help) their termination
+afterwards~\cite{krauss}.  Well-founded recursion replaces structural
+decrease with decrease in a well-founded ordering. At least in
+constructive type theory, evidence of well-foundedness then propagates
+through code.  In contrast, our approach here, while less general,
+does not clutter code with proofs.  For more on partiality and recursion
+in theorem provers, see~\cite{bove+16}.
 
 Subsidiary recursion can be seen as a generalization of \emph{nested
-recursion}, which allows recursive calls of the form \verb|f (f x)|.
+recursion}, which allows recursive calls of the form \verb|f (f x)|~\cite{krauss10}.
 In subsidiary recursion, these are generalized to the form
 \verb|f (g x)|, where \verb|g| could be \verb|f| or another
 recursively defined function.
 
-\textbf{Mendler encoding.}
-Mendler introduced the basic idea of using universal abstraction to
-support compositional termination checking; an accessible source
-is~\cite{mendler91}.  He introduces a functor-generic recursor of type
-\[
-\all{X}{(\all{R}{(R \to X) \to F\ R \to X}) \to \mu\ F\ \to X}
-\]
-\noindent We have adopted this idea to the constructor of the type
-\verb|Mu| (Section~\ref{sec:mu}).  Previous work explored the
-categorical perspective on Mendler-style recursion~\cite{uustalu99}.
-Others have explored the possibility of using it with negative type
-schemes~\cite{ahn11}.
+\textbf{Mendler encoding.}  Mendler introduced the basic idea of using
+universal abstraction to support compositional termination checking;
+an accessible source is~\cite{mendler91}.  He introduces a
+functor-generic recursor of type $\all{X}{(\all{R}{(R \to X) \to F\ R
+    \to X}) \to \mu\ F\ \to X}$. We have adopted this idea to the
+constructor of the type \verb|Mu| (Section~\ref{sec:mu}).  Previous
+works explored the categorical perspective on Mendler-style
+recursion~\cite{uustalu99}, and its use with negative type
+schemes~\cite{ahn11}.  Previous work from our group showed
+how to derive inductive datatypes in Cedille using encodings
+extending the Mendler encoding~\cite{firsov+18b,firsov+18a,stump18}.
 
 \section{Conclusion}
 
+We have seen a derivation in Coq of a scheme for terminating
+subsidiary recursion, where recursions may be nested and outer
+recursive calls may be made on results of inner recursions.  We saw
+examples invoking the \verb|span| function as a subsidiary recursion,
+for functions \verb|wordsBy| and run-length encoding.  We also looked
+briefly at the extension of this interface to support subsidiary
+induction, with example lemmas about \verb|span|, and the decoding
+correctness theorem for run-length encoding.  There are many other
+interesting examples we can develop in Coq with this interface,
+including natural-number division, which may invoke subtraction as a
+subsidiary recursion.  Another example is Harper's regular-expression
+matcher, which previous work showed can be implemented in Cedille
+using a form of nested recursion that is subsumed by subsidiary
+recursion~\cite{stump20}.  We may also attempt to extend the recursion
+universe further, to allow other forms of recursion like
+divide-and-conquer, where some (necessarily limited) ability to
+recurse on values built using constructors is required.
+
+\pagebreak
 \bibliography{biblio}
 
 \end{document}
