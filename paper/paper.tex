@@ -257,7 +257,7 @@ Let us consider two central files from our development.
 
 \begin{figure}
   \begin{verbatim}
-Definition List := Subrec ListF .
+Definition List := Subrec ListF.
 Definition inList : ListF List -> List := inn ListF.
 Definition mkNil : List := inList Nil.
 Definition mkCons (hd : A) (tl : List) : List := inList (Cons hd tl).
