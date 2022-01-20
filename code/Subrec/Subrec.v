@@ -92,6 +92,15 @@ Definition roll: SubrecF Subrec -> Subrec :=
 Definition unroll: Subrec -> SubrecF Subrec :=
   outMu (FunF := SubrecFunctor) SubrecF.
 
+(* Characterization of roll and unroll *)
+Theorem UnrollRollChar : forall (s : SubrecF Subrec),
+  forall (X : Set -> Set) (FunX : Functor X) (IdF : FmapId X FunX) (alg : AlgF Alg Subrec X),
+    unroll (roll s) X FunX (rollAlg alg) = s X FunX (rollAlg alg).
+  intros .
+  simpl.
+  rewrite IdF .
+  f_equal .
+  Qed .
 (* -------------------------------------------------------------------------------- *)
 (* 
    We want to build inSubrec : F Subrec -> Subrec.
@@ -110,6 +119,18 @@ Definition inn : F Subrec -> Subrec :=
 Definition out{R:Set}(fo:FoldT Alg R) : R -> F R :=
   fo F FunF (rollAlg (fun _ _ _ _ d => d)).
 
+(* Characterization of fold / inn *)
+Theorem FoldChar : forall (X : Set -> Set) (FunX : Functor X) (IdF : FmapId X FunX)
+                          (algf : AlgF Alg Subrec X) (d : F Subrec),
+    fold X FunX (rollAlg algf) (inn d) =
+      algf _ (fun x => x) fold (fold X FunX (rollAlg algf)) d .
+  intros .
+  change (fold X FunX (rollAlg algf) (inn d)) with (unroll (roll (fun X' FunX' alg' => unrollAlg alg' _ (fun x => x) fold (fold X' FunX' alg') d)) X FunX (rollAlg algf)) .
+  rewrite UnrollRollChar .
+  rewrite UnrollRollIso .
+  reflexivity .
+  assumption .
+  Qed.
 End Subrec.
 
 Arguments rollAlg{F}{C}{X} algf.
