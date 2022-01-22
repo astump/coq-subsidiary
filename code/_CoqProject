@@ -8,6 +8,7 @@ Subrec/Mu.v
 Subrec/Mui.v
 Subrec/Subrec.v
 Subrec/Subreci.v
+Subrec/Schemes.v
 List/List.v
 List/ListPfs.v
 List/ExtraLib.v

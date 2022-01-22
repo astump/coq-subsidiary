@@ -23,3 +23,10 @@ Global Instance FunConst(T : Set)  : Functor (Const T) :=
 
 Definition FmapId(F : Set -> Set)(FunF : Functor F) : Set :=
   forall (A : Set) (x : F A), fmap (fun x => x) x = x .
+
+Theorem FmapIdConst (T : Set) : FmapId (Const T) (FunConst T) .
+  intro .
+  intros .
+  simpl.
+  reflexivity .
+Qed .
