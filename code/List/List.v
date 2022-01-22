@@ -103,7 +103,7 @@ Section List.
   Definition toList (xs : list A) : List := listFold xs (inn ListF).
   Definition fromList : List -> list A :=
     fold ListF (Const (list A)) (FunConst (list A))
-         (rollAlg (fun R reveal fo eval fr => listIn (fmap eval fr))) .
+         (rollAlg (fun R reveal fo rec fr => listIn (fmap rec fr))) .
   Definition canonList (xs : List) : List := toList (fromList xs).
 
   Definition ListPT :
@@ -134,31 +134,31 @@ Section List.
 
   Definition LengthAlg(C : Set) : Alg ListF C (Const nat) :=
    rollAlg
-   (fun _ _ _ eval xs =>
+   (fun _ _ _ rec xs =>
        match xs with
          Nil => 0
-       | Cons hd tl => 1 + eval tl
+       | Cons hd tl => 1 + rec tl
        end).
 
   Definition length : List -> nat :=
     fold ListF (Const nat) (FunConst nat) (LengthAlg List).
 
   Definition appendAlg : Alg ListF List (Const (List -> List)) :=
-    rollAlg (fun _ _ _ eval xs ys =>
+    rollAlg (fun _ _ _ rec xs ys =>
                match xs with
                | Nil => ys
-               | Cons hd tl => mkCons hd (eval tl ys)
+               | Cons hd tl => mkCons hd (rec tl ys)
                end
             ).
   Definition append (xs ys : List) : List :=
     fold ListF _ _ appendAlg xs ys.
   
   Definition getNilAlg(R : Set) : Alg ListF R option :=
-    rollAlg (fun _ _ _ eval xs =>
+    rollAlg (fun _ _ _ rec xs =>
                match xs with
                  Nil => None
                | Cons hd tl =>
-                 match (eval tl) with
+                 match (rec tl) with
                    None => Some tl
                  | Some tl => Some tl
                  end

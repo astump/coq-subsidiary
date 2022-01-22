@@ -33,7 +33,7 @@ Definition AlgF(Alg: KAlg)(C : Set)(X : Set -> Set) : Set :=
   forall (R : Set)
       (reveal : R -> C)        
       (fold : FoldT Alg R)
-      (eval : R -> X R)      
+      (rec : R -> X R)      
       (d : F R),             
       X R.
 
