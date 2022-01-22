@@ -147,32 +147,32 @@ wordsBy p (hd:tl) =
 \subsection{Summary of results}
 
 This paper presents a functor-generic derivation of terminating
-subsidiary recursion and induction in Coq.  We should emphasize that
-this is a derivation within the type theory of Coq, and requires no
-axioms or other modifications to Coq. Using this derivation, we
-present several example functions like \verb|wordsBy|, and prove
-theorems about them.  A nice example is a definition of run-length
-encoding using \verb|span| as a subsidiary recursion, where we prove
-that encoding and then decoding returns the original list.  Our
-approach applies to the standard datatypes in the Coq library, and
-does not require switching libraries or datatype definitions.
+subsidiary recursion and induction in Coq.  We emphasize that this is
+a derivation within the type theory of Coq, and requires no axioms or
+other modifications to Coq, except the \verb|-impredicative-set|
+flag. Using this derivation, we present several example functions like
+\verb|wordsBy|, and prove theorems about them.  A nice example is a
+definition of run-length encoding using \verb|span| as a subsidiary
+recursion, where we prove that encoding and then decoding returns the
+original list.  Our approach applies to the standard datatypes in the
+Coq library, and does not require switching libraries or datatype
+definitions.
 
 An important technical novelty is a derivation of a weakened form of
 positive-recursive type in Coq.  Coq (Agda, and Lean) restrict
-datatypes $D$ to be strictly positive: in the type for any constructor
-of $D$, $D$ cannot occur to the left of any arrows.  Our derivation
-needs to use positive-recursive types, where $D$ may occur to the left
-of an even number (only) of arrows.  We present a way to derive a
-weakened form of positive-recursive type that is sufficient for our
-examples (Section~\ref{sec:mu}).  The weakening is to require only
-that $F\ \mu$ is a retract of $\mu$, where $\mu$ is the recursive type
-and $F\ \mu$ its one-step unfolding.  Usually these types are
+datatypes $D$ to be strictly positive: in the input types of
+constructors of $D$, $D$ cannot occur to the left of any arrows.  Our
+derivation needs to use positive-recursive types, where $D$ may occur
+to the left of an even number (only) of arrows.  We present a way to
+derive a weakened form of positive-recursive type that is sufficient
+for our examples (Section~\ref{sec:mu}).  The weakening is to require
+only that $F\ (\mu F)$ is a retract of $\mu F$.  Usually these types are
 isomorphic.  Hence, we dub these \textbf{retractive-positive}
 recursive types.  This weakening leads to noncanonical elements of
 $\mu$, but we will see how to work around this.  Our definition of
-retractive-positive recursive types makes essential use of impredicative
-quantification, and hence is not legal in predicative theories
-like Agda's.
+retractive-positive recursive types makes essential use of
+impredicative quantification, and hence is not legal in predicative
+theories like Agda's.
 
 We begin by summarizing the interface our derivation provides for
 subsidiary recursion (Section~\ref{sec:interface}), and then see
@@ -184,8 +184,7 @@ interface for subsidiary induction is covered next
 (Section~\ref{sec:examplesi}).  Related work is discussed in
 Section~\ref{sec:related}.
 
-All presented derivations have been checked with Coq version 8.13.2,
-using command-line option \verb|-impredicative-set|.  The code may be
+All presented derivations have been checked with Coq version 8.13.2.  The code may be
 found as release \verb|itp-2022| (dated prior to the ITP 2022
 deadline) at \url{https://github.com/astump/coq-subsidiary}.  The
 paper references files in this codebase, as an aid to the reader
@@ -222,7 +221,7 @@ be a functor \verb|X : Set -> Set|.  Second, algebras have a specified
 \emph{anchor type} \verb|C|, which we can think of as the datatype
 \emph{as viewed by a containing recursion} or else, if this is a
 top-level recursion, our development's version of the actual datatype
-(e.g., \verb|List|).  The algebra is presented with:
+(e.g., \verb|List A|, for some \verb|A|).  The algebra is presented with:
 
 \begin{itemize}
 \item a type \verb|R : Set|, which will be this recursion's view of the datatype.
@@ -243,13 +242,14 @@ here is type-based and hence compositional.
 
 As in previous work, we dub this interface a \emph{recursion
 universe}~\cite{stump20}.  As in other domains using the term
-``universe'', we have an entity (here, \verb|R|) from which one cannot
-escape by using the available operations (for other cases:
-the ordinal $\epsilon_0$ and $\omega^-$, the physical universe and traveling at
-the speed of light).  Staying in the recursion universe is good,
-because we may recurse (via \verb|eval|) on any value of type
-\verb|R|.  Some points must still be explained: why \verb|X| has type \verb|Set -> Set|,
-and the definition of \verb|FoldT|.  Let us see these details next.
+``universe'', we have a kind of space (here, \verb|R|) with operations
+that keep one in that space (for other cases: the ordinal $\epsilon_0$
+and $\omega^-$, the physical universe and traveling at the speed of
+light).  Staying in the recursion universe is good, because we may
+recurse (via \verb|eval|) on any value of type \verb|R|.  One can
+use \verb|reveal| to leave, but then \verb|eval| can no longer be used. Some points
+must still be explained: why \verb|X| has type \verb|Set -> Set|, and
+the definition of \verb|FoldT|.  Let us see these details next.
 
 \subsection{The interface in more detail}
 
@@ -343,12 +343,12 @@ Definition unrollAlg :
 \end{figure}
 
 \verb|FoldT Alg C| is the type for fold functions which apply
-algebras of type \verb|Alg| to data of type \verb|C|, which we have
-already dubbed the \emph{anchor type} of the recursion.  At the top
-level of code, the anchor type would just be \verb|List| (for
-example).  When one initiates a subsidiary recursion, though, the
-anchor type will instead by the abstract type \verb|R| for the outer recursion.
-The variable \verb|Alg| occurs only positively (but not strictly
+algebras (\verb|Alg|) to data of type \verb|C|, which we have already
+dubbed the \emph{anchor type} of the recursion.  At the top level of
+code, the anchor type would just be \verb|List| (for example).  When
+one initiates a subsidiary recursion, though, the anchor type will
+instead by the abstract type \verb|R| for the outer recursion.  The
+variable \verb|Alg| occurs only positively (but not strictly
 positively) in \verb|AlgF|, because it occurs negatively in
 \verb|FoldT Alg R| which occurs negatively in \verb|AlgF Alg C X|.  So
 we can indeed take a fixed-point of \verb|AlgF| to define the constant
@@ -357,14 +357,15 @@ we can indeed take a fixed-point of \verb|AlgF| to define the constant
 Let us look at \verb|AlgF|.  As noted already, each recursion is based
 on an abstract type \verb|R|, representing the data upon which we will
 recurse.  This is the first argument to a value of type
-\verb|AlgF Alg C X|.  An algebra can assume nothing about \verb|R|
-except that it supports the following operations.  First there is
-\verb|reveal|, which turns an \verb|R| into a \verb|C|.  This reveals
-that the data of type \verb|R| are really values of the anchor type
-of this recursion.  Next we have \texttt{fold}, which will allow us to fold
-another algebra over data of type \verb|R|.  We will use \verb|fold|
-to initiate subsidiary recursions.  Then there is \verb|eval|, for
-recursive calls on data of type \verb|R|.
+\verb|AlgF Alg C X|.  Reasoning parametrically, an algebra can assume
+nothing about \verb|R| except that it supports the following
+operations.  First there is \verb|reveal|, which turns an \verb|R|
+into a \verb|C|.  This reveals that the data of type \verb|R| are
+really values of the anchor type of this recursion.  Next we have
+\texttt{fold}, which will allow us to fold another algebra over data
+of type \verb|R|.  We will use \verb|fold| to initiate subsidiary
+recursions.  Then there is \verb|eval|, for recursive calls on data of
+type \verb|R|.
 
 As noted already, for subsidiary recursion, algebras have a carrier
 \verb|X| which depends (functorially) on a type.  This is so that (i)
@@ -916,14 +917,12 @@ it) with implementations for the components of the recursion universe
 \end{itemize}
 
 Finally, Figure~\ref{fig:subrecb} defines \verb|out| as a subsidiary
-recursion, given any fold function with its anchor type \verb|R|.  The
-code for \verb|out| just folds an algebra over the input of type
-\verb|R|, where that algebra simply returns the subdata structure it
-is given.  Outside the recusion, this has type \verb|F R|; inside the
+recursion, given any fold function with its anchor type \verb|R|.
+Outside the recursion, \verb|d| has type \verb|F R|; inside the
 recursion it has type \verb|F R'| where \verb|R'| is the abstract type
-of the subsidiary recursion (named in the figure just for discussion
-here).  So \verb|out| implements the idea that unfolding an abstract
-type one step is just a trivial case of subsidiary recursion.
+of the subsidiary recursion.  So \verb|out| implements the idea that
+unfolding an abstract type one step is just a trivial case of
+subsidiary recursion.
 
 \begin{figure}
 \begin{verbatim}
@@ -1140,10 +1139,11 @@ in ITPs~\cite{owens+08}.  The goal of terminating recursion has been
 advocated in the literature on programming languages under the name
 \emph{strong functional programming}~\cite{turner95}.  Uustalu and
 Vene developed a categorical view of a recursion scheme allowing one
-level of subsidiary recursion, and illustrated it with an artificial
-example~\cite{uustalu11}.  In contrast, our scheme allows arbitrary
-finite nestings of recursion, and we illustrate it with realistic
-examples drawn from Haskell's \verb|Data.List.Extra|.
+level of subsidiary recursion, and illustrated it in Haskell with an
+artificial example~\cite{uustalu11}.  In contrast, our scheme allows
+arbitrary finite nestings of recursion, and we illustrate it in Coq
+with realistic examples.  Like them, we find that subsidiary recursion
+subsumes course-of-value recursion.
 
 \textbf{Mendler-style recursion.}  Mendler introduced the idea of using
 universal abstraction to support compositional termination checking~\cite{mendler91}.  He proposed a
@@ -1156,7 +1156,8 @@ schemes~\cite{ahn11}.  Previous work from our group showed
 how to derive inductive datatypes in Cedille using encodings
 extending the Mendler encoding~\cite{firsov+18b,firsov+18a}.
 Here, we do not derive inductive types using these methods,
-but rather apply them to justify a terminating recursion scheme.
+but rather apply them to justify a terminating recursion scheme
+for existing datatypes.
 
 \section{Conclusion}
 
