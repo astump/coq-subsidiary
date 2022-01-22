@@ -381,10 +381,29 @@ the flexibility to type results inside a recursion with the abstract
 type \verb|R|, but view those results as having the anchor type
 \verb|C| outside the recursion.
 
-The final definitions in the figure are for \verb|fold|, which allows
+The last definitions in the figure are for \verb|fold|, which allows
 us to fold an \verb|Alg| over a value of type \verb|Subrec|; and for mapping
 between \verb|Alg| and its unfolding in terms of \verb|AlgF|.  We will
 return to the code for \verb|Subrec.v| in Section~\ref{sec:deriv}.
+
+Finally, for a recursion scheme, one would like to see not just the
+typed interface, but also the computation law.  This is stated as a
+theorem in Figure~\ref{fig:comp}.  Intuitively, it states that
+\verb|fold|ing an algebra over constructed data \verb|inn d| is equal
+to invoking the algebra on the identity function for \verb|reveal|
+from the interface for algebras (Figure~\ref{fig:algf}); \verb|fold|
+for the fold function; an invocation of \verb|fold| with the algebra
+for the \verb|eval| function; and \verb|d| for the subdata structure.
+
+\begin{figure}
+\begin{verbatim}
+Theorem FoldChar :
+ forall (X : Set -> Set) (FunX : Functor X) (IdF : FmapId X FunX)
+        (algf : AlgF Alg Subrec X) (d : F Subrec),
+ fold X FunX (rollAlg algf) (inn d) =
+   algf _ (fun x => x) fold (fold X FunX (rollAlg algf)) d .
+\end{verbatim}
+\end{figure}
 
 \section{Examples of subsidiary recursion}
 \label{sec:examples}
@@ -424,7 +443,7 @@ If the first element of the input list
 \verb|xs| to \verb|span| does not satisfy \verb|p|, then \verb|span|
 should return \verb|([], xs)|.  But when recursing on \verb|xs|, we
 will see it only in the form of a subdata structure of type
-\verb|F R|.  We will not be able to return it from our recursion at
+\verb|ListF A R|.  We will not be able to return it from our recursion at
 type \verb|R|, and hence we would not be able to return \verb|([],xs)|
 as desired.  To work around this, we will have our recursion return a value
 of type \verb|SpanF R| (\verb|X| will be implicit for the constructors):
@@ -438,8 +457,8 @@ one tricky case where \verb|p| does not match the first element, by
 returning \verb|SpanNoMatch|.  Otherwise, it will be able to return,
 via \verb|SpanSomeMatch|, a prefix and the suffix at type
 \verb|R|. The prefix will be nonempty, and hence the suffix will be at
-most the tail of \verb|xs|.  This tail is available to the algebra
-in the subdata structure of type \verb|F R|.
+most the tail of \verb|xs|.  This suffix is available to the algebra
+in the subdata structure of type \verb|ListF A R|.
 
 \subsubsection{The algebra for \texttt{span}}
 
@@ -509,7 +528,7 @@ return \verb|([],xs)|, which we can do here, because we have
 information that the subdata structure of type \verb|F R| is derived
 from a value of type \verb|R|.  If \verb|spanhr| returns
 \verb|SpanSomeMatch l r|, then we return the nonempty
-prefix (\verb|l|) and the suffix (\verb|r|).  We also define a version of \verb|break| for subsidiary recursion.
+prefix (\verb|l|) and the suffix (\verb|r|).  We also define a version of \verb|break| for subsidiary recursion (e.g., in \verb|wordsBy|, below).
 
 
 \begin{figure}
@@ -1143,21 +1162,28 @@ level of subsidiary recursion, and illustrated it in Haskell with an
 artificial example~\cite{uustalu11}.  In contrast, our scheme allows
 arbitrary finite nestings of recursion, and we illustrate it in Coq
 with realistic examples.  Like them, we find that subsidiary recursion
-subsumes course-of-value recursion.
+subsumes course-of-value recursion.  The technique of sized types is
+similar to our method in providing a type-based method for
+termination~\cite{barthe04}.  This technique enriches datatypes with
+abstract sizes, which must then be propagated through code, using
+dependent types.  Our \verb|Subrec| does not require dependent types,
+resulting in just polymorphically typed code for the examples we saw
+(\verb|Subreci|, for proofs, of course does use dependent types).
 
-\textbf{Mendler-style recursion.}  Mendler introduced the idea of using
-universal abstraction to support compositional termination checking~\cite{mendler91}.  He proposed a
-functor-generic recursor of type $\all{X}{(\all{R}{(R \to X) \to F\ R
-    \to X}) \to \mu\ F\ \to X}$. We have adopted this idea to the
-constructor of the type \verb|Mu| (Section~\ref{sec:mu}).  Previous
-works explored the categorical perspective on Mendler-style
-recursion~\cite{uustalu99}, and its use with negative type
-schemes~\cite{ahn11}.  Previous work from our group showed
-how to derive inductive datatypes in Cedille using encodings
-extending the Mendler encoding~\cite{firsov+18b,firsov+18a}.
-Here, we do not derive inductive types using these methods,
-but rather apply them to justify a terminating recursion scheme
-for existing datatypes.
+\textbf{Mendler-style recursion.}  Mendler introduced the idea of
+using universal abstraction to support compositional termination
+checking~\cite{mendler91}.  He proposed a functor-generic recursor of
+type $\all{X}{(\all{R}{(R \to X) \to F\ R \to X}) \to \mu\ F\ \to
+  X}$. We have adopted this idea to the constructor of the type
+\verb|Mu| (Section~\ref{sec:mu}).  Previous work explored the
+categorical perspective on Mendler-style recursion, and showed how to
+reduce it to basic catamorphisms (i.e., structural
+recursion)~\cite{uustalu99}.  Another considered its use with negative
+type schemes~\cite{ahn11}.  Previous work from our group showed how to
+derive inductive datatypes in Cedille using extensions of the Mendler
+encoding~\cite{firsov+18b,firsov+18a}.  Here, we do not derive
+inductive types using these methods, but rather apply them to justify
+a terminating recursion scheme for existing datatypes.
 
 \section{Conclusion}
 
