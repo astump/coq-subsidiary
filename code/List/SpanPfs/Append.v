@@ -30,7 +30,7 @@ Lemma SpanAppend(p : A -> bool)(C : List A -> Prop) : Algi (ListF A) ListFi C (C
   + change (fromList (mkCons h t)) with (h :: fromList t).
     unfold span,spanr,spanhr; simpl'.
     destruct (p h) eqn:e.
-    ++ change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (Subrec.Subrec (ListF A))) t) with (spanh p t).
+    ++ change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p) t) with (spanh p t).
        destruct (spanh p t) eqn:e'; intro u; inversion u as [(u1, u2)]; clear u.
        +++ reflexivity.
        +++ set (ih1 := ih t H l0 l1).

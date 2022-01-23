@@ -36,7 +36,7 @@ Lemma GuardPresh(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) ListFi S 
   + intros l r u ; inversion u.
   + intros l r.
     simpl'.
-    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (Subrec.Subrec (ListF A))) t) with (spanh p t).
+    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p) t) with (spanh p t).
     destruct (p h) eqn:e.
     ++ destruct (spanh p t) eqn:e2;    
          intro u;

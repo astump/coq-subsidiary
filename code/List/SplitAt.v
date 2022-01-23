@@ -34,10 +34,9 @@ Section SplitAt.
        end
     }.
   
-  Definition SplitAtAlg(C : Set)
-    : Alg (ListF A) C SplitAtF1 :=
+  Definition SplitAtAlg : Alg (ListF A) SplitAtF1 :=
     rollAlg 
-      (fun R reveal fo splitAt xs n => 
+      (fun R fo splitAt xs n => 
          match xs with
            Nil => SplitAtZ 
          | Cons hd tl =>
@@ -53,7 +52,7 @@ Section SplitAt.
 
   Definition splitAthr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                       (xs : R) : SplitAtF1 R :=
-    fo SplitAtF1 SplitAtFunctor (SplitAtAlg R) xs.
+    fo SplitAtF1 SplitAtFunctor SplitAtAlg xs.
 
   Definition splitAth(xs : List A) : SplitAtF1 (List A) :=
     splitAthr (fold (ListF A)) xs.

@@ -30,7 +30,7 @@ Lemma SpanForall(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C 
   + intro e; inversion e; apply Forall_nil.
   + unfold span, spanr, spanhr. simpl'.
     change (Subrec.Subrec (ListF A)) with (List A).
-    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (List A)) t) with (spanh p t).
+    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p) t) with (spanh p t).
     destruct (p h) eqn:e.
     ++ destruct (spanh p t) eqn:e'; intro u; inversion u as [(u1,u2)]; clear u; apply Forall_cons; try assumption.
        +++ apply Forall_nil.
@@ -62,7 +62,7 @@ Lemma SpanForall2(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C
     inversion u as [|h' t' ph' u'].
     unfold span, spanr,spanhr. simpl'.
     rewrite ph'.
-    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p (Subrec.Subrec (ListF A))) t) with (spanh p t).
+    change (fold (ListF A) (SpanF A) (SpanFunctor A) (SpanAlg A p) t) with (spanh p t).
     set (ih1 := ih t rt u').
     unfold span , spanr in ih1.
     destruct (spanh p t) eqn:e; unfold spanh in e; rewrite e in ih1.

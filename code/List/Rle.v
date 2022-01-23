@@ -40,11 +40,11 @@ Section RLE.
          ((succ (length p),hd), s).
 
   Definition RleCarr := Const (list (nat * A)).
-  Definition RleAlg(C : Set) : Alg (ListF A) C RleCarr :=
-    MapThroughAlg compressSpan C.
+  Definition RleAlg : Alg (ListF A) RleCarr :=
+    MapThroughAlg compressSpan.
 
   Definition rle(xs : List A) : list (nat * A)
-    := @fold (ListF A) RleCarr (FunConst (list (nat * A))) (RleAlg (List A)) xs.
+    := @fold (ListF A) RleCarr (FunConst (list (nat * A))) RleAlg xs.
 
   Theorem RldRle (xs : list A): rld (rle (toList xs)) = xs.  
   listInd (fun (X : List A -> Prop) xs => rld (rle xs) = fromList xs) xs.

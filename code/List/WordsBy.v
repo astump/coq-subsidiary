@@ -19,10 +19,10 @@ Section WordsBy.
 
   Variable A : Set.
   
-  Definition WordsBy(p : A -> bool)(C : Set)
-    : Alg (ListF A) C (Const (list (list A))) :=
+  Definition WordsBy(p : A -> bool)
+    : Alg (ListF A) (Const (list (list A))) :=
     rollAlg 
-      (fun R reveal fo wordsBy xs => 
+      (fun R fo wordsBy xs => 
          match xs with
            Nil => [] 
          | Cons hd tl =>
@@ -35,7 +35,7 @@ Section WordsBy.
 
   Definition wordsByr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                      (p : A -> bool)(xs : R) : list (list A) :=
-    fo (Const (list (list A))) (FunConst (list (list A))) (WordsBy p R) xs.
+    fo (Const (list (list A))) (FunConst (list (list A))) (WordsBy p) xs.
 
   Definition wordsBy(p : A -> bool)(xs : List A) : list (list A) :=
     wordsByr (fold (ListF A)) p xs.
@@ -47,7 +47,7 @@ Section WordsBy.
   + apply Forall_nil.
   + unfold wordsByThmT.
     simpl'.
-    change (fold (ListF A) (Const (list (list A))) (FunConst (list (list A))) (WordsBy p (Subrec (ListF A))) t) with (wordsBy p t).
+    change (fold (ListF A) (Const (list (list A))) (FunConst (list (list A))) (WordsBy p) t) with (wordsBy p t).
     destruct (p h) eqn:e.
     ++ exact (ih t H).
     ++ destruct (breakr (fold (ListF A)) p t) eqn:e'.
