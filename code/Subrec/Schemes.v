@@ -6,10 +6,10 @@ Require Import Subrec.
 
 Require Import Coq.Program.Basics.
 
-Section Schemes .
+Variable F : Set -> Set.
+Context {FunF : Functor F}.
 
-  Variable F : Set -> Set.
-  Context {FunF : Functor F}.
+Section Schemes .
 
   Section CourseOfValues.
 
@@ -33,39 +33,52 @@ Section Schemes .
 
   End CourseOfValues .
 
+  Section CofreeRecursiveComonad.
+
+    Definition MRec{R : Set}(fo : FoldT (Alg F) R) : Set :=
+      forall (C : Set), (forall (Y : Set), (Y -> C) -> (Y -> R) -> F Y -> C) -> R -> C .
+
+    Definition mrec{R : Set}(fo : FoldT (Alg F) R) : MRec fo :=
+      fun C psi x => fo _ _ (rollAlg (fun R' re' fo' rec' xs => psi R' rec' re' xs)) x .
+
+    Definition Update : Set :=
+      forall {C Y : Set},
+        (forall {C' : Set}, (forall {Y' : Set}, (Y' -> C') -> (Y' -> Y) -> F Y' -> C') -> Y -> C')
+        -> (Y -> C)
+        -> (forall {C' : Set}, (forall {Y' : Set}, (Y' -> C) -> (Y' -> C') -> F Y' -> C') -> Y -> C') .
+
+    Definition update : Update :=
+      fun C Y theta g C' psi => theta _ (fun Y' de io => psi _ (compose g io) de) .
+
+    Definition RCRSubAlg (C Y : Set) :=
+      (forall (C' : Set),
+          (forall (Y' : Set), (Y' -> C) -> (Y' -> C') -> F Y' -> C') -> Y -> C') .
+    
+    Definition RCRAlg (C : Set) : Set :=
+      (forall (Y : Set), (Y -> C) -> RCRSubAlg C Y -> F Y -> C) .
+
+
+    Definition Miter2 : Set :=
+      forall (C : Set), RCRAlg C -> Subrec F -> C .
+
+    Definition miter2 : Miter2 :=
+      fun C psi x =>
+        fold F _ _
+             (rollAlg
+                (fun R re fo rec xs =>
+                   psi R rec (update C R (mrec fo) rec) xs))
+             x .
+    Theorem MIter2Char (X : Set) (alg : RCRAlg X) (xs : F (Subrec F)) :
+      miter2 X alg (inn F xs) = alg _ (miter2 X alg) (update _ _ (mrec (fold F)) (miter2 X alg)) xs.
+      change (miter2 X alg (inn F xs))
+        with (fold F _ _ (rollAlg
+                            (fun R re fo rec xs =>
+                               alg R rec (update _ _ (mrec fo) rec) xs)) (inn F xs)) .
+      rewrite (FoldChar F) .
+      reflexivity .
+      apply FmapIdConst .
+    Qed .
+
+  End CofreeRecursiveComonad .
+
 End Schemes .
-
-(* Section CofreeRecursiveComonad. *)
-
-(*     Definition MRec : Set := *)
-(*       forall (C : Set), (forall (Y : Set), (Y -> C) -> (Y -> Subrec F) -> F Y -> C) -> Subrec F -> C . *)
-
-(*     Definition mrec : MRec := *)
-(*       fun C psi x => fold F _ _ (rollAlg (fun R re fo rec xs => psi R rec re xs)) x . *)
-
-(*     Definition Update : Set := *)
-(*       forall {C Y : Set}, *)
-(*         (forall {C' : Set}, (forall {Y' : Set}, (Y' -> C') -> (Y' -> Subrec F) -> F Y' -> C') -> Y -> C') *)
-(*         -> (Y -> C) *)
-(*         -> (forall {C' : Set}, (forall {Y' : Set}, (Y' -> C) -> (Y' -> C') -> F Y' -> C') -> Y -> C') . *)
-
-(*     Definition update : Update := *)
-(*       fun C Y theta g C' psi => theta _ (fun Y' de io => psi _ (compose g io) de) . *)
-
-(*     Definition Miter2 : Set := *)
-(*       forall (C : Set), *)
-(*         (forall (Y : Set), *)
-(*             (Y -> C) *)
-(*             -> (forall (C' : Set), *)
-(*                    (forall (Y' : Set), (Y' -> C) -> (Y' -> C') -> F Y' -> C') -> Y -> C') *)
-(*             -> F Y -> C) *)
-(*         -> Subrec F -> C . *)
-
-(*     Definition miter2 : Miter2 := *)
-(*       fun C psi x => *)
-(*         fold F _ _ *)
-(*              (rollAlg (fun R re fo rec xs => *)
-(*                          psi R rec *)
-(*                              (fun C' theta x' => update C R (fun C'' psi'' x'' => mrec C'' psi'' (re x'')) _ _ _ _) *)
-(*                              xs)) *)
-(*              x . *)
