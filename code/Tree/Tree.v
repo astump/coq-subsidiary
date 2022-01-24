@@ -1,3 +1,4 @@
+(* to be completed *)
 Require Import Functors.
 Require Import Subrec.
 Require Import Coq.Lists.List.
@@ -12,9 +13,11 @@ Inductive TreeF(X : Set) :=
 
 Definition Tree := Subrec TreeF.
 
+(*
 Definition MirrorAlg : Alg TreeF Tree (Const Tree) :=
   rollAlg
-    (fun R reveal fold eval d =>
+    (fun R reveal fold rec d =>
        match d with
          Leaf a => Leaf a
        | .
+*)

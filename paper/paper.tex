@@ -16,6 +16,7 @@
 %\hideLIPIcs  %uncomment to remove references to LIPIcs series (logo, DOI, ...), e.g. when preparing a pre-final version to be uploaded to arXiv or another public repository
 
 %\graphicspath{{./graphics/}}%helpful if your graphic files are in another directory
+\usepackage{minted}
 
 \bibliographystyle{plainurl}% the mandatory bibstyle
 
@@ -101,13 +102,13 @@ is sufficient for many basic functions.  For example, the
 \texttt{span} function from Haskell's prelude (\verb|Data.List|) takes
 a list and returns a pair of the maximal prefix whose elements satisfy
 a given predicate \verb|p|, and the remaining suffix:
-\begin{verbatim}
+\begin{minted}{haskell}
 span :: (a -> Bool) -> [a] -> ([a],[a])
 span _ []    =  ([], [])
 span p (x:xs) = if p x
                 then let (ys,zs) = span p xs in (x:ys,zs)
                 else ([],x:xs)
-\end{verbatim}
+\end{minted}
 \noindent The sole recursive call is \verb|span p xs|, and it occurs
 in a clause where the input list is of the form \verb|x:xs|.  Hence it
 is structurally decreasing.  In the appropriate syntax, this
@@ -131,7 +132,7 @@ Code is in Figure~\ref{fig:wordsBy}.  Recall that
 will be permitted by subsidiary recursion.
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{haskell}
 wordsBy :: (a -> Bool) -> [a] -> [[a]]
 wordsBy p [] = []
 wordsBy p (hd:tl) =
@@ -139,7 +140,7 @@ wordsBy p (hd:tl) =
   then wordsBy p tl 
   else let (w,z) = break p tl in
         (hd:w) : wordsBy p z
-\end{verbatim}
+\end{minted}
 \caption{Haskell code for \texttt{wordsBy}, demonstrating subsidiary recursion}
 \label{fig:wordsBy}
 \end{figure}
@@ -147,32 +148,32 @@ wordsBy p (hd:tl) =
 \subsection{Summary of results}
 
 This paper presents a functor-generic derivation of terminating
-subsidiary recursion and induction in Coq.  We should emphasize that
-this is a derivation within the type theory of Coq, and requires no
-axioms or other modifications to Coq. Using this derivation, we
-present several example functions like \verb|wordsBy|, and prove
-theorems about them.  A nice example is a definition of run-length
-encoding using \verb|span| as a subsidiary recursion, where we prove
-that encoding and then decoding returns the original list.  Our
-approach applies to the standard datatypes in the Coq library, and
-does not require switching libraries or datatype definitions.
+subsidiary recursion and induction in Coq.  We emphasize that this is
+a derivation within the type theory of Coq, and requires no axioms or
+other modifications to Coq, except the \verb|-impredicative-set|
+flag. Using this derivation, we present several example functions like
+\verb|wordsBy|, and prove theorems about them.  A nice example is a
+definition of run-length encoding using \verb|span| as a subsidiary
+recursion, where we prove that encoding and then decoding returns the
+original list.  Our approach applies to the standard datatypes in the
+Coq library, and does not require switching libraries or datatype
+definitions.
 
 An important technical novelty is a derivation of a weakened form of
 positive-recursive type in Coq.  Coq (Agda, and Lean) restrict
-datatypes $D$ to be strictly positive: in the type for any constructor
-of $D$, $D$ cannot occur to the left of any arrows.  Our derivation
-needs to use positive-recursive types, where $D$ may occur to the left
-of an even number (only) of arrows.  We present a way to derive a
-weakened form of positive-recursive type that is sufficient for our
-examples (Section~\ref{sec:mu}).  The weakening is to require only
-that $F\ \mu$ is a retract of $\mu$, where $\mu$ is the recursive type
-and $F\ \mu$ its one-step unfolding.  Usually these types are
+datatypes $D$ to be strictly positive: in the input types of
+constructors of $D$, $D$ cannot occur to the left of any arrows.  Our
+derivation needs to use positive-recursive types, where $D$ may occur
+to the left of an even number (only) of arrows.  We present a way to
+derive a weakened form of positive-recursive type that is sufficient
+for our examples (Section~\ref{sec:mu}).  The weakening is to require
+only that $F\ (\mu F)$ is a retract of $\mu F$.  Usually these types are
 isomorphic.  Hence, we dub these \textbf{retractive-positive}
 recursive types.  This weakening leads to noncanonical elements of
 $\mu$, but we will see how to work around this.  Our definition of
-retractive-positive recursive types makes essential use of impredicative
-quantification, and hence is not legal in predicative theories
-like Agda's.
+retractive-positive recursive types makes essential use of
+impredicative quantification, and hence is not legal in predicative
+theories like Agda's.
 
 We begin by summarizing the interface our derivation provides for
 subsidiary recursion (Section~\ref{sec:interface}), and then see
@@ -184,8 +185,7 @@ interface for subsidiary induction is covered next
 (Section~\ref{sec:examplesi}).  Related work is discussed in
 Section~\ref{sec:related}.
 
-All presented derivations have been checked with Coq version 8.13.2,
-using command-line option \verb|-impredicative-set|.  The code may be
+All presented derivations have been checked with Coq version 8.13.2.  The code may be
 found as release \verb|itp-2022| (dated prior to the ITP 2022
 deadline) at \url{https://github.com/astump/coq-subsidiary}.  The
 paper references files in this codebase, as an aid to the reader
@@ -210,11 +210,11 @@ $A$.  From a programming perspective, an $F$-algebra is given input of
 type $F\ A$, and must compute a result of type $A$.  An example of $F$
 is the signature functor for lists, which we will use below:
 
-\begin{verbatim}
+\begin{minted}{coq}
 Inductive ListF(X : Set) : Set :=
 | Nil : ListF X
 | Cons : A -> X -> ListF X.
-\end{verbatim}
+\end{minted}
 
 Algebras for our subsidiary recursion are more complex than $F$-algebras.  First, for
 reasons we will explain further below, the carrier of the algebra will
@@ -222,13 +222,13 @@ be a functor \verb|X : Set -> Set|.  Second, algebras have a specified
 \emph{anchor type} \verb|C|, which we can think of as the datatype
 \emph{as viewed by a containing recursion} or else, if this is a
 top-level recursion, our development's version of the actual datatype
-(e.g., \verb|List|).  The algebra is presented with:
+(e.g., \verb|List A|, for some \verb|A|).  The algebra is presented with:
 
 \begin{itemize}
 \item a type \verb|R : Set|, which will be this recursion's view of the datatype.
 \item a function \verb|reveal : R -> C|, which reveals values of type \verb|R| as really having the anchor type.  
 \item a function \verb|fold : FoldT Alg R|, which allows one to initiate subsidiary recursions in which the anchor type is \verb|R|.  Note that the algebra's anchor type is \verb|C|, but for subsidiary recursions the anchor type changes (to \verb|R|). We will present the type \verb|FoldT Alg R| below.
-\item a function \verb|eval : R -> X R|, to use for making recursive calls, on any value of type \verb|R|.
+\item a function \verb|rec : R -> X R|, to use for making recursive calls, on any value of type \verb|R|.
 \item and a \emph{subdata structure} \verb|d : F R|, where \verb|F| is the signature functor for the datatype.
 \end{itemize}
 
@@ -243,80 +243,84 @@ here is type-based and hence compositional.
 
 As in previous work, we dub this interface a \emph{recursion
 universe}~\cite{stump20}.  As in other domains using the term
-``universe'', we have an entity (here, \verb|R|) from which one cannot
-escape by using the available operations (for other cases:
-the ordinal $\epsilon_0$ and $\omega^-$, the physical universe and traveling at
-the speed of light).  Staying in the recursion universe is good,
-because we may recurse (via \verb|eval|) on any value of type
-\verb|R|.  Some points must still be explained: why \verb|X| has type \verb|Set -> Set|,
-and the definition of \verb|FoldT|.  Let us see these details next.
+``universe'', we have a kind of space (here, \verb|R|) with operations
+that keep one in that space (for other cases: the ordinal $\epsilon_0$
+and $\omega^-$, the physical universe and traveling at the speed of
+light).  Staying in the recursion universe is good, because we may
+recurse (via \verb|rec|) on any value of type \verb|R|.  One can
+use \verb|reveal| to leave, but then \verb|rec| can no longer be used. Some points
+must still be explained: why \verb|X| has type \verb|Set -> Set|, and
+the definition of \verb|FoldT|.  Let us see these details next.
 
-\subsection{The interface in more detail}
+\subsection{Types for subsidiary recursion (\texttt{Subrec.v}, \texttt{List.v})}
 
-Let us consider two central files from our development.
 
 \begin{figure}
-  \begin{verbatim}
+\begin{minted}{coq}
 Definition List := Subrec ListF.
 Definition inList : ListF List -> List := inn ListF.
 Definition mkNil : List := inList Nil.
 Definition mkCons (hd : A) (tl : List) : List := inList (Cons hd tl).
 Definition toList : list A -> List.
 Definition fromList : List -> list A.
-\end{verbatim}
+\end{minted}
   \caption{Some basics from \texttt{List.v}, specializing the functor-generic derivation of subsidiary recursion to lists (\texttt{List.v})}
   \label{fig:listf}
 \end{figure}
 
-\subsubsection{Subrec.v}
+Our development is parametrized by a signature functor \verb|F| of
+type \verb|Set -> Set|.  It implements \verb|Subrec : Set|, which is
+the type to use for subsidiary recursion.  This type comes with
+\verb|inn : F Subrec -> Subrec|, which behaves computationally like a
+constructor.  \verb|Subrec.v| does not itself provide an induction
+principle based on \verb|inn|, however.  Induction is derived later
+(Section~\ref{sec:interfacei}). \verb|Subrec.v| makes critical use of
+retractive-positive recursive types, to take a fixed-point of a
+construction based on \verb|F|.  We present these recursive types in
+Section~\ref{sec:mu} below.
 
-  This file is parametrized by a signature functor \verb|F| of type
-  \verb|Set -> Set|.  It provides the implementation of subsidiary
-  recursion.  Two crucial values are \verb|Subrec : Set|, which is the
-  type to use for subsidiary recursion; and
-  \verb|inn : F Subrec -> Subrec|, which is to be used as a
-  constructor for that type.  An important point, however, is that
-  \verb|Subrec.v| does not provide an induction principle based on
-  \verb|inn|.  Induction is derived later
-  (Section~\ref{sec:interfacei}). \verb|Subrec.v| makes critical use
-  of retractive-positive recursive types, to take a fixed-point of a
-  construction based on \verb|F|.  We present these recursive
-  types in Section~\ref{sec:mu} below.
-
-  \subsubsection{List.v}
-
-  This file specializes the development in \verb|Subrec.v| to the case
-  of lists, parametrized by the type \verb|A| of elements.  In
-  general, to use our development to get subsidiary recursion over
-  some datatype, one will have a similar ``shim'' file.  For space
-  reasons, we just give the example of lists.  The file defines the
-  signature functor \verb|ListF|, already shown above.  We have
-  also the definitions of Figure~\ref{fig:listf}.  \verb|List| is defined to be \verb|Subrec|, with
-   \verb|F| instantiated to \verb|ListF A|.  This type \verb|List| is not to be
-  confused with the type \verb|list| of lists in Coq's standard
-  library.  As noted previously, our development is meant to be used
-  in extension of existing inductive datatypes, not replacing them.
-  The figure also shows constructors \verb|mkNil| and \verb|mkCons|
-  for \verb|List|, and types for conversion functions between
-  \verb|List| and \verb|list| (code elided). One direction uses Coq's structural
-  recursion, the other uses subsidiary recursion, which we will
-  see next. 
+For our examples, we will consider the specialization to the case of
+lists, parametrized by the type \verb|A| of elements.  In general, to
+use our development to get subsidiary recursion over some datatype,
+one must define a signature functor for the datatype.  For lists, this
+is \verb|ListF| of Figure~\ref{fig:listf}.  \verb|List| is defined to
+be \verb|Subrec|, with \verb|F| instantiated to \verb|ListF A|.  This
+type \verb|List| is not to be confused with the type \verb|list| of
+lists in Coq's standard library.  As noted previously, our development
+is meant to be used in extension of existing inductive datatypes, not
+replacing them.  The figure also shows constructors \verb|mkNil| and
+\verb|mkCons| for \verb|List|, and types for conversion functions
+between \verb|List| and \verb|list| (code elided). One direction uses
+Coq's structural recursion, the other uses subsidiary recursion, which
+we will see next.
   
 
 \subsection{Algebras for subsidiary recursion}
 
-\verb|Subrec.v| also implements the notion of algebra we introduced informally above.  The central definitions are in
+\verb|Subrec.v| also implements the notion of algebra we introduced
+informally above.  The central definitions are in
 Figure~\ref{fig:algf}.  \verb|KAlg| is the kind for the
 type-constructor for algebras, as we see in the definition of
 \verb|Alg|.  This type-constructor \verb|Alg| is a fixed-point of the
 type \verb|AlgF|.  The fixed-point is taken using \verb|MuAlg|, which
 implements our retractive-positive recursive types
-(Section~\ref{sec:mu}) at kind \verb|KAlg|.  Using \verb|Alg| will
-require that \verb|AlgF| only uses its parameter \verb|Alg|
-positively.  We will confirm this shortly.
+(Section~\ref{sec:mu}) at kind \verb|KAlg|.  
+
+We need a fixed-point here due to the input \verb|fold| (\verb|Algf|)
+of type \verb|FoldT Alg C|.  This is the type for fold functions which
+apply algebras (\verb|Alg|) to data of type \verb|C|, which we have
+already dubbed the \emph{anchor type} of the recursion.  At the top
+level of code, the anchor type would just be \verb|List A| (for
+example).  When one initiates a subsidiary recursion, though, the
+anchor type will instead by the abstract type \verb|R| for the outer
+recursion.  The variable \verb|Alg| occurs only positively (but not
+strictly positively) in \verb|AlgF|, because it occurs negatively in
+\verb|FoldT Alg R| which occurs negatively in \verb|AlgF Alg C X|.  So
+we can indeed take a fixed-point of \verb|AlgF| to define the constant
+\verb|Alg|.
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition KAlg  : Type := Set -> (Set -> Set) -> Set.
 
 Definition FoldT(alg : KAlg)(C : Set) : Set :=
@@ -326,7 +330,7 @@ Definition AlgF(Alg: KAlg)(C : Set)(X : Set -> Set) : Set :=
   forall (R : Set)
          (reveal : R -> C)        
          (fold : FoldT Alg R)
-         (eval : R -> X R)      
+         (rec : R -> X R)      
          (d : F R),             
          X R.
 
@@ -337,40 +341,30 @@ Definition rollAlg :
   forall {C : Set} {X : Set -> Set}, AlgF Alg C X -> Alg C X.
 Definition unrollAlg : 
   forall {C : Set} {X : Set -> Set}, Alg C X -> AlgF Alg C X.
-\end{verbatim}
-\caption{The type for algebras (\texttt{Subrec.v})}
+\end{minted}
+\caption{The type for algebras, parametrized over \texttt{F : Set -> Set} (\texttt{Subrec.v})}
 \label{fig:algf}
 \end{figure}
 
-\verb|FoldT Alg C| is the type for fold functions which apply
-algebras of type \verb|Alg| to data of type \verb|C|, which we have
-already dubbed the \emph{anchor type} of the recursion.  At the top
-level of code, the anchor type would just be \verb|List| (for
-example).  When one initiates a subsidiary recursion, though, the
-anchor type will instead by the abstract type \verb|R| for the outer recursion.
-The variable \verb|Alg| occurs only positively (but not strictly
-positively) in \verb|AlgF|, because it occurs negatively in
-\verb|FoldT Alg R| which occurs negatively in \verb|AlgF Alg C X|.  So
-we can indeed take a fixed-point of \verb|AlgF| to define the constant
-\verb|Alg|.
 
 Let us look at \verb|AlgF|.  As noted already, each recursion is based
 on an abstract type \verb|R|, representing the data upon which we will
 recurse.  This is the first argument to a value of type
-\verb|AlgF Alg C X|.  An algebra can assume nothing about \verb|R|
-except that it supports the following operations.  First there is
-\verb|reveal|, which turns an \verb|R| into a \verb|C|.  This reveals
-that the data of type \verb|R| are really values of the anchor type
-of this recursion.  Next we have \texttt{fold}, which will allow us to fold
-another algebra over data of type \verb|R|.  We will use \verb|fold|
-to initiate subsidiary recursions.  Then there is \verb|eval|, for
-recursive calls on data of type \verb|R|.
+\verb|AlgF Alg C X|.  Reasoning parametrically, an algebra can assume
+nothing about \verb|R| except that it supports the following
+operations.  First there is \verb|reveal|, which turns an \verb|R|
+into a \verb|C|.  This reveals that the data of type \verb|R| are
+really values of the anchor type of this recursion.  Next we have
+\texttt{fold}, which will allow us to fold another algebra over data
+of type \verb|R|.  We will use \verb|fold| to initiate subsidiary
+recursions.  Then there is \verb|rec|, for recursive calls on data of
+type \verb|R|.
 
 As noted already, for subsidiary recursion, algebras have a carrier
 \verb|X| which depends (functorially) on a type.  This is so that (i)
 inside an inner recursion we may compute a result of some type that
 may mention \verb|R|, but (ii) outside that recursion, the result will
-mention the anchor type \verb|C|.  The \verb|eval| function returns
+mention the anchor type \verb|C|.  The \verb|rec| function returns
 something of type \verb|X R|, and so does the algebra itself; this
 demonstrates (i).  For (ii): if we look at the definition of
 \verb|FoldT| in the figure, we see that folding an algebra of type
@@ -380,65 +374,87 @@ the flexibility to type results inside a recursion with the abstract
 type \verb|R|, but view those results as having the anchor type
 \verb|C| outside the recursion.
 
-The final definitions in the figure are for \verb|fold|, which allows
+The last definitions in the figure are for \verb|fold|, which allows
 us to fold an \verb|Alg| over a value of type \verb|Subrec|; and for mapping
 between \verb|Alg| and its unfolding in terms of \verb|AlgF|.  We will
 return to the code for \verb|Subrec.v| in Section~\ref{sec:deriv}.
+
+Finally, for a recursion scheme, one would like to see not just the
+typed interface, but also the computation law.  This is stated as a
+theorem in Figure~\ref{fig:comp}.  Intuitively, it states that
+\verb|fold|ing an algebra over constructed data \verb|inn d| is equal
+to invoking the algebra on the identity function for \verb|reveal|
+from the interface for algebras (Figure~\ref{fig:algf}); \verb|fold|
+for the fold function; an invocation of \verb|fold| with the algebra
+for the \verb|rec| function; and \verb|d| for the subdata structure.
+
+\begin{figure}
+\begin{minted}{coq}
+Theorem FoldChar :
+ forall (X : Set -> Set) (FunX : Functor X) (IdF : FmapId X FunX)
+        (algf : AlgF Alg Subrec X) (d : F Subrec),
+ fold X FunX (rollAlg algf) (inn d) =
+   algf _ (fun x => x) fold (fold X FunX (rollAlg algf)) d .
+\end{minted}
+\end{figure}
 
 \section{Examples of subsidiary recursion}
 \label{sec:examples}
 
 Having seen the interface for subsidiary recursion in Coq, let us
-consider now some examples.
+consider now some examples.  
 
 \subsection{The \texttt{span} function (\texttt{Span.v})}
 
+This first example does not invoke subsidiary recursions, but will
+itself be used as a subsidiary recursion in other examples to follow.
 Given a predicate \verb|p : A -> bool|, and a value of type
 \verb|List A|, we would like to compute a pair of type
 \verb|list A * List A|, where the first component is the maximal
 prefix whose elements satisfy \verb|p|, and the second is the
 remaining suffix.  This is the typing for a top-level recursion.  More
 generally, though, given an anchor type \verb|R : Set| along with a
-fold function for that anchor type (i.e., of type \verb|FoldT (Alg (ListF A)) R|),
-we would like to map an input list of type \verb|R| to a pair of
-type \verb|list A * R|.  The first component of this pair is
-going to be built up from scratch, and so cannot have type \verb|R|;
-we cannot statically ensure that outer recursions on it are legal.
-But the second component will be a subdatum of the input list,
-and so can still have type \verb|R|, enabling outer recursive calls.  So we want: 
-\begin{verbatim}
+fold function for that anchor type (i.e., of type
+\verb|FoldT (Alg (ListF A)) R|), we would like to map an input list of
+type \verb|R| to a pair of type \verb|list A * R|.  The first
+component of this pair is going to be built up from scratch, and so
+cannot have type \verb|R|; we cannot statically ensure that outer
+recursions on it are legal.  But the second component will be a
+subdatum of the input list, and so can still have type \verb|R|,
+enabling outer recursive calls.  So we want:
+\begin{minted}{coq}
 Definition spanr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                 (p : A -> bool)(xs : R) : list A * R.
-\end{verbatim}
+\end{minted}
 \noindent From this we can also define the top-level recursion, by
 supplying \verb|fold (ListF A)|, which is the function for folding an algebra
 over a list (Figure~\ref{fig:algf}), for the argument \verb|fo| of \verb|spanr|:
-\begin{verbatim}
+\begin{minted}{coq}
 Definition span(p : A -> bool)(xs : List A) : list A * List A
   := spanr (fold (ListF A)) p xs.
-\end{verbatim} 
+\end{minted}
 
 Before we define \verb|spanr|, we must resolve a small problem.
 If the first element of the input list
 \verb|xs| to \verb|span| does not satisfy \verb|p|, then \verb|span|
 should return \verb|([], xs)|.  But when recursing on \verb|xs|, we
 will see it only in the form of a subdata structure of type
-\verb|F R|.  We will not be able to return it from our recursion at
+\verb|ListF A R|.  We will not be able to return it from our recursion at
 type \verb|R|, and hence we would not be able to return \verb|([],xs)|
 as desired.  To work around this, we will have our recursion return a value
 of type \verb|SpanF R| (\verb|X| will be implicit for the constructors):
-\begin{verbatim}
+\begin{minted}{coq}
 Inductive SpanF(X : Set) : Set :=
   SpanNoMatch : SpanF X
 | SpanSomeMatch : list A -> X -> SpanF X.
-\end{verbatim}
+\end{minted}
 \noindent The idea is that the recursion will signal if it is in the
 one tricky case where \verb|p| does not match the first element, by
 returning \verb|SpanNoMatch|.  Otherwise, it will be able to return,
 via \verb|SpanSomeMatch|, a prefix and the suffix at type
 \verb|R|. The prefix will be nonempty, and hence the suffix will be at
-most the tail of \verb|xs|.  This tail is available to the algebra
-in the subdata structure of type \verb|F R|.
+most the tail of \verb|xs|.  This suffix is available to the algebra
+in the subdata structure of type \verb|ListF A R|.
 
 \subsubsection{The algebra for \texttt{span}}
 
@@ -455,7 +471,7 @@ actually parametrized by \verb|C|, which is good, as it means we can
 use \verb|SpanAlg| for top-level or subsidiary recursions.
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition SpanAlg(p : A -> bool)(C : Set)
   : Alg (ListF A) C SpanF :=
   rollAlg (fun R reveal fo span xs => 
@@ -470,7 +486,7 @@ Definition SpanAlg(p : A -> bool)(C : Set)
           else
             SpanNoMatch 
        end).
-\end{verbatim}
+\end{minted}
 \caption{The algebra \texttt{SpanAlg} for the \texttt{span} function (\texttt{Span.v})}
 \label{fig:spanalg}
 \end{figure}
@@ -508,11 +524,11 @@ return \verb|([],xs)|, which we can do here, because we have
 information that the subdata structure of type \verb|F R| is derived
 from a value of type \verb|R|.  If \verb|spanhr| returns
 \verb|SpanSomeMatch l r|, then we return the nonempty
-prefix (\verb|l|) and the suffix (\verb|r|).  We also define a version of \verb|break| for subsidiary recursion.
+prefix (\verb|l|) and the suffix (\verb|r|).  We also define a version of \verb|break| for subsidiary recursion (e.g., in \verb|wordsBy|, below).
 
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition spanhr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                  (p : A -> bool)(xs : R) : SpanF R :=
   fo SpanF SpanFunctor (SpanAlg p R) xs.
@@ -527,7 +543,7 @@ Definition spanr{R : Set}(fo:FoldT (Alg (ListF A)) R)
 Definition breakr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                  (p : A -> bool)(xs : R) : list A * R :=
   spanr fo (fun x => negb (p x)) xs.
-\end{verbatim}
+\end{minted}
 \caption{Functions derived from \texttt{SpanAlg} (\texttt{Span.v})}
 \label{fig:span}
 \end{figure}
@@ -575,7 +591,7 @@ can indeed apply \verb|wordsBy : R -> list (list A)| to
 recursion \verb|wordsByr|.
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
   Definition WordsBy(p : A -> bool)(C : Set)
     : Alg (ListF A) C (Const (list (list A))) :=
     rollAlg (fun R reveal fo wordsBy xs => 
@@ -592,8 +608,8 @@ recursion \verb|wordsByr|.
 Definition wordsByr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                    (p : A -> bool)(xs : R) : list (list A) :=
   fo (Const (list (list A))) (FunConst (list (list A))) (WordsBy p R) xs.
-\end{verbatim}
-\caption{Functions functions \texttt{wordsBy} and \texttt{wordsByr}, and the algebra they
+\end{minted}
+\caption{Functions  \texttt{wordsBy} and \texttt{wordsByr}, and the algebra they
   fold (\texttt{WordsBy.v})}
 \label{fig:wordsby}
 \end{figure}
@@ -601,18 +617,19 @@ Definition wordsByr{R : Set}(fo:FoldT (Alg (ListF A)) R)
 \subsection{The \texttt{mapThrough} function (\texttt{MapThrough.v})}
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{haskell}
 mapThrough :: (a -> [a] -> (b, [a])) -> [a] -> [b]
 mapThrough f [] = []
 mapThrough f (a:as) = b : mapThrough f as'
     where (b, as') = f a as
-\end{verbatim}
+\end{minted}
 \caption{The \texttt{mapThrough} function in Haskell}
 \label{fig:mapthroughhs}
 \end{figure}
 
-The Haskell library \verb|Data.List.Extra| has a function
-\verb|repeatedly|, defined essentially as in
+In this example, we see how to write a combinator that factors out a
+subsidiary recursion.  The Haskell library \verb|Data.List.Extra| has
+a function \verb|repeatedly|, defined essentially as in
 Figure~\ref{fig:mapthroughhs}, though we attempt a more informative
 name.  This is like the standard \verb|map| function on lists, except
 that the function \verb|f| that we are mapping (or ``mapping
@@ -627,10 +644,10 @@ function for \verb|mapThrough|'s recursion.  This is so that the
 mapped function can initiate a subsidiary recursion, returning a value
 in the abstract type \verb|R| of \verb|mapThrough|'s recursion.  So
 the type we will use for mapped functions is:
-\begin{verbatim}
+\begin{minted}{coq}
 Definition mappedT(A B : Set) : Set :=
   forall(R : Set)(fo:FoldT (Alg (ListF A)) R), A -> R -> B * R.
-\end{verbatim}
+\end{minted}
 \noindent This type is more informative than the Haskell type,
 since it shows that the second component of the returned value
 must have type \verb|R|, and hence must be (hereditarily) a tail
@@ -648,7 +665,7 @@ return \verb|list B|; we cannot perform further subsidiary recursion
 on the output.  
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition MapThroughAlg{B : Set}(f:mappedT A B)
            (C : Set) : Alg (ListF A) C (Const (list B)) :=
   rollAlg (fun R reveal fo mapThrough xs => 
@@ -662,7 +679,7 @@ Definition MapThroughAlg{B : Set}(f:mappedT A B)
 Definition mapThroughr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                       {B : Set}(f:mappedT A B) : R -> list B.
 Definition mapThrough{B : Set}(f:mappedT A B) : List A -> list B.
-\end{verbatim}
+\end{minted}
 \caption{The algebra \texttt{MapThroughAlg} defining function \texttt{mapThrough} and \texttt{mapThroughr}; the
   code for those follows the pattern of \texttt{wordsBy} and \texttt{wordsByr} (Figure~\ref{fig:wordsby}), so
   we omit it (\texttt{MapThrough.v})}
@@ -672,24 +689,24 @@ Definition mapThrough{B : Set}(f:mappedT A B) : List A -> list B.
 \subsection{Run-length encoding (\texttt{Rle.v})}
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{haskell}
 rle :: Eq a => [a] -> [(Int,a)]
 rle = mapThrough compressSpan
   where compressSpan a as =
           let (p,s) = span (== a) as in
             ((1 + length p, a),s)
-\end{verbatim} 
+\end{minted} 
 \caption{Run-length encoding in Haskell, using \texttt{mapThrough} and \texttt{span}}
 \label{fig:rlehs}
 \end{figure}
 
-Using \verb|mapThrough|, we can quite concisely implement
-\emph{run-length encoding}, a basic data-compression algorithm where
-maximal sequences of $n$ occurrences of element $e$ are summarized by
-the pair $(n,e)$~\cite{datacomp}.  Haskell code is in Figure~\ref{fig:rlehs}.
-Recall that \verb|(== a)| 
-tests its input for equality with \verb|a|.  The
-\verb|compressSpan| helper function gathers up all elements at the
+Finally, we have an example using our \verb|mapThrough| combinator
+together with a subsidiary recursion, to implement \emph{run-length
+encoding}.  This is a basic data-compression algorithm where maximal
+sequences of $n$ occurrences of element $e$ are summarized by the pair
+$(n,e)$~\cite{datacomp}.  Haskell code is in Figure~\ref{fig:rlehs}.
+Recall that \verb|(== a)| tests its input for equality with \verb|a|.
+The \verb|compressSpan| helper function gathers up all elements at the
 start of the tail \verb|as| that are equal to the head \verb|a|.  This
 prefix is returned as \verb|p|, with the remaining suffix as \verb|s|.
 The pair \verb|(1 + length p, a)| is returned to summarize
@@ -701,9 +718,9 @@ we port this code to our Coq infrastructure in Figure~\ref{fig:rle}.
 The function \verb|compressSpan| is written at the type \verb|mappedT A (nat * A)| that
 will be required by \verb|mapThrough|.  Unfolding the definition of \verb|mappedT|,
 \verb|compressSpan| has type:
-\begin{verbatim}
+\begin{minted}{coq}
 forall(R : Set)(fo:FoldT (Alg (ListF A)) R), A -> R -> (nat * A) * R.
-\end{verbatim}
+\end{minted}
 \noindent It will be invoked by the code for \verb|mapThrough| with a
 fold function \verb|fo| with anchor type \verb|R|, and then has the
 responsibility of extracting from the tail at type \verb|R| (second input) 
@@ -718,7 +735,7 @@ recursions using \verb|fold| (we could also define a subsidiary version
 
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition compressSpan : mappedT A (nat * A) :=
   fun R fo hd tl => 
     let (p,s) := spanr fo (eqb hd) tl in
@@ -729,7 +746,7 @@ Definition RleAlg(C : Set) : Alg (ListF A) C RleCarr :=
   MapThroughAlg compressSpan C.
 Definition rle(xs : List A) : list (nat * A)
   := fold (ListF A) RleCarr (FunConst (list (nat * A))) (RleAlg (List A)) xs.
-\end{verbatim}
+\end{minted}
 \caption{The function \texttt{rle} for run-length encoding, and the algebra \texttt{RleAlg} defining it
 in terms of \texttt{MapThroughAlg} of Figure~\ref{fig:mapthrough} (\texttt{Rle.v})}
 \label{fig:rle}
@@ -759,19 +776,19 @@ impredicative polymorphism for a different solution.
 
 Assume \verb|F : Set -> Set|, with an \verb|fmap| function
 (morphism part of the functor) of type
-\begin{verbatim}
+\begin{minted}{coq}
 forall A B : Set, (A -> B) -> F A -> F B
-\end{verbatim}
+\end{minted}
 \noindent which satisfies the identity-preservation law for functors:
-\begin{verbatim}
+\begin{minted}{coq}
 fmapId : forall (A : Set)(d : F A), fmap (fun x => x) d = d
-\end{verbatim}
+\end{minted}
 \noindent Then we make the definitions of Figure~\ref{fig:mu}.  The critical
 idea is embodied in the definition of \verb|Mu|.  Ideally, we would like
 to have a definition like
-\begin{verbatim}
+\begin{minted}{coq}
   Inductive Mu' : Set := mu' : F Mu' -> Mu'.
-\end{verbatim}
+\end{minted}
 \noindent This is exactly what is used in approaches to modular
 datatypes in functional programming, like
 Swierstra's~\cite{swierstra08}.  But this definition is (rightly)
@@ -779,7 +796,7 @@ rejected by Coq, as instantiations of
 \verb|F| that are not strictly positive would be unsound.
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
   Inductive Mu : Set := 
     mu : forall (R : Set), (R -> Mu) -> F R -> Mu.
 
@@ -792,7 +809,7 @@ rejected by Coq, as instantiations of
     end.
 
   Lemma outIn(d : F Mu) : outMu (inMu d) = d.
-\end{verbatim}
+\end{minted}
 \caption{Derivation of retractive-positive recursive types (\texttt{Mu.v})}
 \label{fig:mu}
 \end{figure}  
@@ -800,10 +817,10 @@ rejected by Coq, as instantiations of
 
 The definition of \verb|Mu| weakens
 this to a strictly positive approximation:
-\begin{verbatim}
+\begin{minted}{coq}
   Inductive Mu : Set := 
     mu : forall (R : Set), (R -> Mu) -> F R -> Mu.
-\end{verbatim}
+\end{minted}
 \noindent Instead of taking in \verb|F Mu|, constructor \verb|mu|
 accepts an input of type \verb|F R|, for some type \verb|R| for which
 we have a function of type \verb|R -> Mu|.  The impredicative
@@ -830,14 +847,14 @@ simple form.  Let us temporarily define \verb|List A| as
 \verb|Mu (ListF A)| (again, for subsidiary recursion do not use just
 \verb|ListF| directly).  The canonical way to define the empty list
 would be, implicitly instantiating \verb|F| to \verb|ListF A|,
-\begin{verbatim}
+\begin{minted}{coq}
 Definition mkNil := mu (List A) (fun x => x) (NilF A)
-\end{verbatim}
+\end{minted}
 \noindent But given this, there are infinitely many other equivalent
 definitions.  For any \verb|Q : Set|, we could take
-\begin{verbatim}
+\begin{minted}{coq}
 Definition mkNil' := mu Q (fun x => mkNil) (NilF A)
-\end{verbatim}
+\end{minted}
 \noindent Since \verb|fmap f (NilF A)| equals just \verb|NilF B| for
 \verb|f : A -> B|, if we apply \verb|outMu| (of Figure~\ref{fig:mu})
 to \verb|mkNil'| or \verb|mkNil|, we will get \verb|NilF (List A)|.
@@ -861,9 +878,9 @@ fixed-point of \verb|SubrecF : Set -> Set|.  We take this fixed-point
 with \verb|Mu|, discussed in the previous section, and obtain \verb|roll|
 and \verb|unroll| functions between \verb|SubrecF Subrec| and \verb|Subrec|.
 Unrolling \verb|Subrec| gives us the type
-\begin{verbatim}
+\begin{minted}{coq}
 forall (X : Set -> Set) (FunX : Functor X), Alg Subrec X -> X Subrec
-\end{verbatim}
+\end{minted}
 \noindent So we see that \verb|Subrec| is the type of functions which,
 for all algebras with anchor type \verb|Subrec| and functorial carrier
 \verb|X|, compute a value of type \verb|X Subrec|.  This is a
@@ -874,13 +891,13 @@ $\textit{Alg}\ X$ is $F\ X \to X$.  We elide the implementation of the
 makes use of functoriality of carriers \verb|X|.
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition SubrecF(C : Set) := 
   forall (X : Set -> Set) (FunX : Functor X), Alg C X -> X C.
 Definition Subrec := Mu SubrecF.
 Definition roll: SubrecF Subrec -> Subrec.
 Definition unroll: Subrec -> SubrecF Subrec.
-\end{verbatim}
+\end{minted}
 \caption{Definition of \texttt{Subrec} as a fixed-point of \texttt{SubrecF} (\texttt{Subrec.v})}
 \label{fig:subrec}
 \end{figure}
@@ -911,22 +928,20 @@ it) with implementations for the components of the recursion universe
 \item the identity function is passed as the value for \verb|reveal : R -> Subrec|.
 \item The function \verb|fold|, which expects an algebra with anchor type \verb|Subrec|, is passed as
   the fold function of type \verb|FoldT Alg R|. 
-\item For the \verb|eval : R -> X R| function, we pass \verb|(fold X xmap alg) : Subrec -> X Subrec|.
+\item For the \verb|rec : R -> X R| function, we pass \verb|(fold X xmap alg) : Subrec -> X Subrec|.
 \item For the subdata structure of type \verb|F R|, we pass \verb|d : F Subrec|. 
 \end{itemize}
 
 Finally, Figure~\ref{fig:subrecb} defines \verb|out| as a subsidiary
-recursion, given any fold function with its anchor type \verb|R|.  The
-code for \verb|out| just folds an algebra over the input of type
-\verb|R|, where that algebra simply returns the subdata structure it
-is given.  Outside the recusion, this has type \verb|F R|; inside the
+recursion, given any fold function with its anchor type \verb|R|.
+Outside the recursion, \verb|d| has type \verb|F R|; inside the
 recursion it has type \verb|F R'| where \verb|R'| is the abstract type
-of the subsidiary recursion (named in the figure just for discussion
-here).  So \verb|out| implements the idea that unfolding an abstract
-type one step is just a trivial case of subsidiary recursion.
+of the subsidiary recursion.  So \verb|out| implements the idea that
+unfolding an abstract type one step is just a trivial case of
+subsidiary recursion.
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition fold : FoldT Alg Subrec := 
   fun X FunX alg d => unroll d X FunX alg.
 
@@ -936,7 +951,7 @@ Definition inn : F Subrec -> Subrec :=
 
 Definition out{R:Set}(fo:FoldT Alg R) : R -> F R :=
   fo F FunF (rollAlg (fun R' _ _ _ d => d)).
-\end{verbatim}
+\end{minted}
 \caption{The rest of the interface for \texttt{Subrec} (\texttt{Subrec.v})}
 \label{fig:subrecb}
 \end{figure}
@@ -968,7 +983,7 @@ algebras.  \verb|FoldTi| is the indexed version of \verb|FoldT|: it
 expresses provability of \verb|X C| for \verb|d|, based on an indexed
 algebra and a value of type \verb|C d|, where \verb|C| is the (indexed) anchor
 type.  \verb|AlgFi| and \verb|Algi| are indexed versions
-of the algebras we saw for recursion.  The \verb|eval| function
+of the algebras we saw for recursion.  The \verb|rec| function
 (Figure~\ref{fig:algf}) has now become an induction hypothesis: given
 any \verb|d| where \verb|R d| holds, \verb|ih| proves \verb|X R d|.  A
 value of type \verb|R d| is thus a license to induct on \verb|d|.
@@ -979,7 +994,7 @@ is the natural indexed version of \verb|SubrecF|.
 
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition kMo := Subrec -> Prop.
 Definition KAlgi := kMo -> (kMo -> kMo) -> Set.
 Definition FoldTi(alg : KAlgi)(C : kMo) : kMo :=
@@ -1002,7 +1017,7 @@ Definition Subreci := Mui Subrec SubrecFi.
 
 Definition foldi(i : Subrec) : FoldTi Algi Subreci i.
 Definition inni(i : Subrec)(fd : Fi Subreci i) : Subreci i.
-\end{verbatim}
+\end{minted}
 \caption{Interface for subsidiary induction (\texttt{Subreci.v})}
 \label{fig:subreci}
 \end{figure}
@@ -1017,7 +1032,7 @@ We also introduce an abbreviation \verb|ListFoldTi| for the type
 of indexed fold functions over lists.
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition lkMo := List -> Prop.
 
 Inductive ListFi(R : lkMo) : lkMo :=
@@ -1028,7 +1043,7 @@ Definition Listi := Subreci ListF ListFi.
 Definition toListi(xs : list A) : Listi (toList xs) := listFoldi xs Listi inni.
 Definition ListFoldTi(R : List -> Prop)(d : List) : Prop :=
   FoldTi ListF (Algi ListF ListFi) R d.
-\end{verbatim}
+\end{minted}
 \caption{The indexed version \texttt{ListFi} of \texttt{ListF} (\texttt{List.v})}
 \label{fig:listfi}
 \end{figure}
@@ -1055,9 +1070,9 @@ subsidiary induction of the following, where
 \verb|rld : list (nat * A) -> list A| is the obvious decoding
 function:
 
-\begin{verbatim}
+\begin{minted}{coq}
 Theorem RldRle (xs : list A): rld (rle (toList xs)) = xs.  
-\end{verbatim}
+\end{minted}
 
 \noindent We invoke the lemmas about \verb|span| subsidiarily,
 so that we may apply our induction hypothesis to the suffix
@@ -1068,14 +1083,14 @@ to show that the abstract predicate \verb|R| applies to the suffix
 \verb|r| returned by \verb|span|.  This enables the outer induction
 hypothesis (for \verb|RldRle|) to be applied.
 
-\begin{verbatim}
+\begin{minted}{coq}
 Lemma guardPres{R : List A -> Prop}(foi:forall d : List A, ListFoldTi R d)
       (p : A -> bool)(xs : List A)(rxs : R xs)
       (l:list A)(r : List A)(e: span p xs = (l,r)) : R r.
-\end{verbatim} 
+\end{minted} 
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition SpanAppendF(p : A -> bool)(xs : List A) : Prop :=
   forall (l : list A)(r : List A) ,
     span p xs = (l,r) ->
@@ -1090,7 +1105,7 @@ Definition GuardPresF(p : A -> bool)(S : List A -> Prop)(xs : List A) : Prop :=
   forall (l : list A)(r : List A),
     spanh p xs = SpanSomeMatch l r ->
     S r.
-\end{verbatim}
+\end{minted}
 \caption{Statements of three lemmas about \texttt{span} (directory \texttt{SpanPfs})}
 \label{fig:spanlem}
 \end{figure}
@@ -1107,11 +1122,11 @@ in this case is to use a function \verb|getNil| (\verb|List.v|) that computes
 an empty list from \verb|xs|.  The statement that one can prove is shown in Figure~\ref{fig:spanforallt}.
 
 \begin{figure}
-\begin{verbatim}
+\begin{minted}{coq}
 Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
   Forall (fun a => p a = true) (fromList xs) ->
   span p xs = (fromList xs, getNil xs).
-\end{verbatim}
+\end{minted}
 \caption{A statement of the property that \texttt{span} returns the empty suffix, computed using \texttt{getNil} to avoid noncanonicity problems, if all elements satisfy \texttt{p}}
 \label{fig:spanforallt}
 \end{figure}
@@ -1140,23 +1155,34 @@ in ITPs~\cite{owens+08}.  The goal of terminating recursion has been
 advocated in the literature on programming languages under the name
 \emph{strong functional programming}~\cite{turner95}.  Uustalu and
 Vene developed a categorical view of a recursion scheme allowing one
-level of subsidiary recursion, and illustrated it with an artificial
-example~\cite{uustalu11}.  In contrast, our scheme allows arbitrary
-finite nestings of recursion, and we illustrate it with realistic
-examples drawn from Haskell's \verb|Data.List.Extra|.
+level of subsidiary recursion, and illustrated it in Haskell with an
+artificial example~\cite{uustalu11}.  In contrast, our scheme allows
+arbitrary finite nestings of recursion, and we illustrate it in Coq
+with realistic examples.  It seems that generalizing the carriers of
+algebras to functors is the critical step enabling such examples.
+Like Uustalu and Vene, we find that subsidiary recursion subsumes
+course-of-value recursion.  Our method is also similar to the
+technique of sized types, in providing a type-based method for
+termination~\cite{barthe04}.  With sized types, datatypes are indexed
+with abstract sizes, which must then be propagated through code, using
+dependent types.  Our \verb|Subrec| does not require dependent types,
+resulting in just polymorphically typed code for our examples
+(\verb|Subreci|, for proofs, of course does use dependent types).
 
-\textbf{Mendler-style recursion.}  Mendler introduced the idea of using
-universal abstraction to support compositional termination checking~\cite{mendler91}.  He proposed a
-functor-generic recursor of type $\all{X}{(\all{R}{(R \to X) \to F\ R
-    \to X}) \to \mu\ F\ \to X}$. We have adopted this idea to the
-constructor of the type \verb|Mu| (Section~\ref{sec:mu}).  Previous
-works explored the categorical perspective on Mendler-style
-recursion~\cite{uustalu99}, and its use with negative type
-schemes~\cite{ahn11}.  Previous work from our group showed
-how to derive inductive datatypes in Cedille using encodings
-extending the Mendler encoding~\cite{firsov+18b,firsov+18a}.
-Here, we do not derive inductive types using these methods,
-but rather apply them to justify a terminating recursion scheme.
+\textbf{Mendler-style recursion.}  Mendler introduced the idea of
+using universal abstraction to support compositional termination
+checking~\cite{mendler91}.  He proposed a functor-generic recursor of
+type $\all{X}{(\all{R}{(R \to X) \to F\ R \to X}) \to \mu\ F\ \to
+  X}$. We have adopted this idea to the constructor of the type
+\verb|Mu| (Section~\ref{sec:mu}).  Previous work explored the
+categorical perspective on Mendler-style recursion, and showed how to
+reduce it to basic catamorphisms (i.e., structural
+recursion)~\cite{uustalu99}.  Another considered its use with negative
+type schemes~\cite{ahn11}.  Previous work from our group showed how to
+derive inductive datatypes in Cedille using extensions of the Mendler
+encoding~\cite{firsov+18b,firsov+18a}.  Here, we do not derive
+inductive types using these methods, but rather apply them to justify
+a terminating recursion scheme for existing datatypes.
 
 \section{Conclusion}
 
