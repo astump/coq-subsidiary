@@ -44,7 +44,7 @@ Section RLE.
     MapThroughAlg compressSpan.
 
   Definition rle(xs : List A) : list (nat * A)
-    := @fold (ListF A) RleCarr (FunConst (list (nat * A))) RleAlg xs.
+    := fold (ListF A) RleCarr (FunConst (list (nat * A))) RleAlg xs.
 
   Theorem RldRle (xs : list A): rld (rle (toList xs)) = xs.  
   listInd (fun (X : List A -> Prop) xs => rld (rle xs) = fromList xs) xs.

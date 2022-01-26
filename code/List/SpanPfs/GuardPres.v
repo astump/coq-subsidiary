@@ -29,9 +29,9 @@ Lemma GuardPresFuni(p : A -> bool) : fmapiT (List A) (GuardPresF p).
   exact (gxs l r u).
 Qed.
 
-Lemma GuardPresh(p : A -> bool)(S : Mui.kMo (List A)) : Algi (ListF A) ListFi S (GuardPresF p) .
+Lemma GuardPresh(p : A -> bool) : Algi (ListF A) ListFi (GuardPresF p) .
   apply rollAlgi.
-  intros R _ _ ih xs fxs .
+  intros R _ ih xs fxs .
   destruct fxs.
   + intros l r u ; inversion u.
   + intros l r.
@@ -48,7 +48,7 @@ Qed.
 
 Definition guardPresh{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
                     (p : A -> bool)(xs : List A)(rxs : R xs) : GuardPresF p R xs
- := foi xs (GuardPresF p) (GuardPresFuni p) (GuardPresh p R) rxs.
+ := foi xs (GuardPresF p) (GuardPresFuni p) (GuardPresh p) rxs.
 
 Lemma guardPres{R : List A -> Prop}(foi:forall d : List A, ListFoldTi R d)
       (p : A -> bool)(xs : List A)(rxs : R xs)

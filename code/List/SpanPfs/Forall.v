@@ -23,9 +23,9 @@ Definition spanForallF(p : A -> bool)(xs : List A) : Prop :=
     span p xs = (l,r) ->
     Forallb p l.
 
-Lemma SpanForall(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (spanForallF p)) .
+Lemma SpanForall(p : A -> bool) : Algi (ListF A) ListFi (Consti (spanForallF p)) .
   apply rollAlgi.
-  intros R _ _ ih xs fxs l r .
+  intros R _ ih xs fxs l r .
   destruct fxs.
   + intro e; inversion e; apply Forall_nil.
   + unfold span, spanr, spanhr. simpl'.
@@ -45,16 +45,16 @@ Qed.
 
 Definition spanForall{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
            (p : A -> bool)(xs : List A)(rxs : R xs) : spanForallF p xs :=
-  foi xs (Consti (spanForallF p)) (FunConsti (spanForallF p)) (SpanForall p R) rxs.
+  foi xs (Consti (spanForallF p)) (FunConsti (spanForallF p)) (SpanForall p) rxs.
 
 
 Definition spanForall2F(p : A -> bool)(xs : List A) : Prop :=
   Forallb p (fromList xs) ->
   span p xs = (fromList xs, getNil xs).
 
-Lemma SpanForall2(p : A -> bool)(C : Mui.kMo (List A)) : Algi (ListF A) ListFi C (Consti (spanForall2F p)) .
+Lemma SpanForall2(p : A -> bool) : Algi (ListF A) ListFi (Consti (spanForall2F p)) .
   apply rollAlgi.
-  intros R _ fo ih xs fxs .
+  intros R fo ih xs fxs .
   destruct fxs as [|h t rt].
   + intro u; trivial.
   + intro u.
@@ -86,7 +86,7 @@ Qed.
 
 Definition spanForall2{R : List A -> Prop}(foi:forall d : List A, FoldTi (ListF A) (Algi (ListF A) ListFi) R d)
            (p : A -> bool)(xs : List A)(rxs : R xs) : spanForall2F p xs :=
-  foi xs (Consti (spanForall2F p)) (FunConsti (spanForall2F p)) (SpanForall2 p R) rxs.
+  foi xs (Consti (spanForall2F p)) (FunConsti (spanForall2F p)) (SpanForall2 p) rxs.
 
 End spanForall.
 

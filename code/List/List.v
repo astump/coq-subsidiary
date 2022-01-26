@@ -254,7 +254,7 @@ Ltac listInd P xs :=
   let ind := fresh "ind" in
     set (ind := foldi (Fi := ListFi) (toList xs) P);
     simpl in ind; try (rewrite (inj xs) in ind);
-    apply ind; clear ind; [apply FunConsti | apply rollAlgi; intros R reveal fo ih d fd; destruct fd; [ idtac | fromCons] | exact (toListi _ xs)].
+    apply ind; clear ind; [apply FunConsti | apply rollAlgi; intros R fo ih d fd; destruct fd; [ idtac | fromCons] | exact (toListi _ xs)].
 
 Arguments nilCons{A}{h}{t} e.
 Arguments consCons{A}{h1}{h2}{t1}{t2} e.
