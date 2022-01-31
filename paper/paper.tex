@@ -1110,21 +1110,23 @@ Our work contributes to the program proposed by Owens and Slind, of
 broadening the scope of functional programs that can be accommodated
 in ITPs~\cite{owens+08}.  The goal of terminating recursion has been
 advocated in the literature on programming languages under the name
-\emph{strong functional programming}~\cite{turner95}.  Uustalu and
-Vene developed a categorical view of a recursion scheme allowing one
-level of subsidiary recursion, and illustrated it in Haskell with an
-artificial example~\cite{uustalu11}.  In contrast, our scheme allows
-arbitrary finite nestings of recursion, and we illustrate it in Coq
-with realistic examples.  It seems that generalizing the carriers of
-algebras to functors is the critical step enabling such examples. In
-our Coq development, we show that Uustalu and Vene's scheme is
-derivable from subsidiary recursion. Our method is also similar to the
-technique of sized types, in providing a type-based method for
-termination~\cite{barthe04}.  With sized types, datatypes are indexed
-with abstract sizes, which must then be propagated through code, using
-dependent types.  Our \verb|Subrec| does not require dependent types,
-resulting in just polymorphically typed code for our examples
-(\verb|Subreci|, for proofs, of course does use dependent types).
+\emph{strong functional programming}~\cite{turner95}.  Our method is
+similar to the technique of sized types, in providing a type-based
+method for termination~\cite{barthe04}.  With sized types, datatypes
+are indexed with abstract sizes, which must then be propagated through
+code, using dependent types.  In contrast, our approach relies just on
+polymorphism, and does not require dependent types for writing
+subsidiary recursions.  (\verb|Subreci|, for reasoning about such
+recursions, of course does use dependent types).
+
+Uustalu and Vene developed a categorical view of a recursion scheme
+allowing one level of subsidiary recursion, and illustrated it in
+Haskell with an artificial example~\cite{uustalu11}.  In contrast, our
+scheme allows arbitrary finite nestings of recursion, and we
+illustrate it in Coq with realistic examples.  It seems that
+generalizing the carriers of algebras to functors is the critical step
+enabling such examples. In our Coq development, we show that Uustalu
+and Vene's scheme is derivable from subsidiary recursion. 
 
 \textbf{Mendler-style recursion.}  Mendler introduced the idea of
 using universal abstraction to support compositional termination
