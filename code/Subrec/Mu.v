@@ -92,15 +92,15 @@ Section MuAlg.
 
   Inductive MuAlg : KAlg := 
   muAlg : forall A : KAlg,
-    (forall (C : Set) (X : Set -> Set), A C X -> MuAlg C X) ->
-    forall (C : Set) (X : Set -> Set), F A C X -> MuAlg C X.
+    (forall (X : Set -> Set), A X -> MuAlg X) ->
+    forall (X : Set -> Set), F A X -> MuAlg X.
 
-  Definition inMuAlg {C : Set} {X : Set -> Set} (d : (F MuAlg) C X) : MuAlg C X :=
-    muAlg MuAlg (fun C X x => x) C X d.
+  Definition inMuAlg {X : Set -> Set} (d : F MuAlg X) : MuAlg X :=
+    muAlg MuAlg (fun X x => x) X d.
 
   
-  Definition outMuAlg{C : Set} {X : Set -> Set} (v : MuAlg C X) : (F MuAlg) C X :=
+  Definition outMuAlg {X : Set -> Set} (v : MuAlg X) : (F MuAlg) X :=
     match v with
-    | muAlg A r C1 X1 d => algMap r C1 X1 d
+    | muAlg A r X1 d => algMap r X1 d
     end.
 End MuAlg.

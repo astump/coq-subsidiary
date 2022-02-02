@@ -23,15 +23,14 @@ Section Subrec.
 (* -------------------------------------------------------------------------------- *)
 
 Definition FoldT(alg : KAlg)(C : Set) : Set :=
-  forall (X : Set -> Set) (FunX : Functor X), alg C X -> C -> X C.
+  forall (X : Set -> Set) (FunX : Functor X), alg X -> C -> X C.
 
 (* -------------------------------------------------------------------------------- *)
 (* Algebra *)
 (* -------------------------------------------------------------------------------- *)
 
-Definition AlgF(Alg: KAlg)(C : Set)(X : Set -> Set) : Set :=
+Definition AlgF(Alg: KAlg)(X : Set -> Set) : Set :=
   forall (R : Set)
-      (reveal : R -> C)        
       (fold : FoldT Alg R)
       (rec : R -> X R)      
       (d : F R),             
@@ -41,49 +40,41 @@ Definition Alg : KAlg := MuAlg AlgF.
 
 Definition monoAlg : forall (A B : KAlg), CastAlg A B -> CastAlg (AlgF A) (AlgF B) :=
   fun A B f =>
-    fun C X algf R reveal fo  =>
-      algf R reveal (fun X xmap alg => fo X xmap (f R X alg)).
+    fun X algf R fo  =>
+      algf R (fun X xmap alg => fo X xmap (f X alg)).
 
 Definition castAlgId : forall (A : KAlg), CastAlg A A :=
-  fun A C X d => d.
+  fun A X d => d.
   
 (* fmapId law for HO KAlg Functor *)
 Lemma monoAlgId :
-  forall (A : KAlg) (C : Set) (X : Set -> Set) (algf : AlgF A C X),
-    monoAlg A A (castAlgId A) C X algf = algf.
+  forall (A : KAlg) (X : Set -> Set) (algf : AlgF A X),
+    monoAlg A A (castAlgId A) X algf = algf.
   intros.
   unfold monoAlg.
   repeat (apply functional_extensionality_dep; simpl; intros).
   repeat f_equal.
 Qed.
 
-Definition rollAlg : forall {C : Set} {X : Set -> Set}, AlgF Alg C X -> Alg C X :=
-  fun C X d => inMuAlg AlgF d.
+Definition rollAlg : forall {X : Set -> Set}, AlgF Alg X -> Alg X :=
+  fun X d => inMuAlg AlgF d.
 
-Definition unrollAlg : forall {C : Set} {X : Set -> Set}, Alg C X -> AlgF Alg C X :=
-  fun C X d => outMuAlg AlgF monoAlg d.
+Definition unrollAlg : forall {X : Set -> Set}, Alg X -> AlgF Alg X :=
+  fun X d => outMuAlg AlgF monoAlg d.
 
 Lemma UnrollRollIso :
-  forall (C : Set) (X : Set -> Set) (algf : AlgF Alg C X), unrollAlg (rollAlg algf) = algf.
+  forall (X : Set -> Set) (algf : AlgF Alg X), unrollAlg (rollAlg algf) = algf.
   intros.
   apply monoAlgId.
 Qed.
 
-Definition antiAlg : forall {A B : Set} {X : Set -> Set}, (A -> B) -> (Alg B X) -> (Alg A X) :=
-  fun A B X f alg =>
-    rollAlg (fun R rev =>
-               unrollAlg alg R 
-                         (* building the term rev' : R -> B *)
-                         (fun r => f (rev r))
-            ).
-  
 
-Definition SubrecF(C : Set) := forall (X : Set -> Set) (FunX : Functor X), Alg C X -> X C.
+Definition SubrecF(C : Set) := forall (X : Set -> Set) (FunX : Functor X), Alg X -> X C.
 Definition Subrec := Mu SubrecF.
     
 Instance SubrecFunctor : Functor SubrecF :=
   {
-  fmap := fun A B f initA => fun X xmap alg => fmap f (initA X xmap (antiAlg f alg));
+  fmap := fun A B f initA => fun X xmap alg => fmap f (initA X xmap alg);
   }.
   
 Definition roll: SubrecF Subrec -> Subrec :=
@@ -94,7 +85,7 @@ Definition unroll: Subrec -> SubrecF Subrec :=
 
 (* Characterization of roll and unroll *)
 Theorem UnrollRollChar : forall (s : SubrecF Subrec),
-  forall (X : Set -> Set) (FunX : Functor X) (IdF : FmapId X FunX) (alg : AlgF Alg Subrec X),
+  forall (X : Set -> Set) (FunX : Functor X) (IdF : FmapId X FunX) (alg : AlgF Alg X),
     unroll (roll s) X FunX (rollAlg alg) = s X FunX (rollAlg alg).
   intros .
   simpl.
@@ -114,18 +105,18 @@ Definition fold : FoldT Alg Subrec := fun X FunX alg d => unroll d X FunX alg.
 
 Definition inn : F Subrec -> Subrec :=
   fun d => roll (fun X xmap alg =>
-                    unrollAlg alg Subrec (fun x => x) fold (fold X xmap alg) d).
+                    unrollAlg alg Subrec fold (fold X xmap alg) d).
 
 Definition out{R:Set}(fo:FoldT Alg R) : R -> F R :=
-  fo F FunF (rollAlg (fun _ _ _ _ d => d)).
+  fo F FunF (rollAlg (fun _ _ _ d => d)).
 
 (* Characterization of fold / inn *)
 Theorem FoldChar : forall (X : Set -> Set) (FunX : Functor X) (IdF : FmapId X FunX)
-                          (algf : AlgF Alg Subrec X) (d : F Subrec),
+                          (algf : AlgF Alg X) (d : F Subrec),
     fold X FunX (rollAlg algf) (inn d) =
-      algf _ (fun x => x) fold (fold X FunX (rollAlg algf)) d .
+      algf _ fold (fold X FunX (rollAlg algf)) d .
   intros .
-  change (fold X FunX (rollAlg algf) (inn d)) with (unroll (roll (fun X' FunX' alg' => unrollAlg alg' _ (fun x => x) fold (fold X' FunX' alg') d)) X FunX (rollAlg algf)) .
+  change (fold X FunX (rollAlg algf) (inn d)) with (unroll (roll (fun X' FunX' alg' => unrollAlg alg' _ fold (fold X' FunX' alg') d)) X FunX (rollAlg algf)) .
   rewrite UnrollRollChar .
   rewrite UnrollRollIso .
   reflexivity .
@@ -133,7 +124,7 @@ Theorem FoldChar : forall (X : Set -> Set) (FunX : Functor X) (IdF : FmapId X Fu
   Qed.
 End Subrec.
 
-Arguments rollAlg{F}{C}{X} algf.
+Arguments rollAlg{F}{X} algf.
 
 (* -------------------------------------------------------------------------------- *)
 (* -- Common Tactics *)
@@ -141,9 +132,7 @@ Arguments rollAlg{F}{C}{X} algf.
 
 Ltac simpl' :=
   simpl;
-  try (repeat (rewrite monoAlgId));
-  try (change (antiAlg ?F (fun x : ?T => x) ?alg)
-         with alg).
+  try (repeat (rewrite monoAlgId)).
 
 
           

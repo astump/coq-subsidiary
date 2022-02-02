@@ -103,7 +103,7 @@ Section List.
   Definition toList (xs : list A) : List := listFold xs (inn ListF).
   Definition fromList : List -> list A :=
     fold ListF (Const (list A)) (FunConst (list A))
-         (rollAlg (fun R reveal fo rec fr => listIn (fmap rec fr))) .
+         (rollAlg (fun R fo rec fr => listIn (fmap rec fr))) .
   Definition canonList (xs : List) : List := toList (fromList xs).
 
   Definition ListPT :
@@ -132,9 +132,9 @@ Section List.
   (* Some basic list operations *)
   (* -------------------------------------------------------------------------------- *)
 
-  Definition LengthAlg(C : Set) : Alg ListF C (Const nat) :=
+  Definition LengthAlg(C : Set) : Alg ListF (Const nat) :=
    rollAlg
-   (fun _ _ _ rec xs =>
+   (fun _ _ rec xs =>
        match xs with
          Nil => 0
        | Cons hd tl => 1 + rec tl
@@ -143,8 +143,8 @@ Section List.
   Definition length : List -> nat :=
     fold ListF (Const nat) (FunConst nat) (LengthAlg List).
 
-  Definition appendAlg : Alg ListF List (Const (List -> List)) :=
-    rollAlg (fun _ _ _ rec xs ys =>
+  Definition appendAlg : Alg ListF (Const (List -> List)) :=
+    rollAlg (fun _ _ rec xs ys =>
                match xs with
                | Nil => ys
                | Cons hd tl => mkCons hd (rec tl ys)
@@ -153,8 +153,8 @@ Section List.
   Definition append (xs ys : List) : List :=
     fold ListF _ _ appendAlg xs ys.
   
-  Definition getNilAlg(R : Set) : Alg ListF R option :=
-    rollAlg (fun _ _ _ rec xs =>
+  Definition getNilAlg(R : Set) : Alg ListF option :=
+    rollAlg (fun _ _ rec xs =>
                match xs with
                  Nil => None
                | Cons hd tl =>
@@ -254,7 +254,7 @@ Ltac listInd P xs :=
   let ind := fresh "ind" in
     set (ind := foldi (Fi := ListFi) (toList xs) P);
     simpl in ind; try (rewrite (inj xs) in ind);
-    apply ind; clear ind; [apply FunConsti | apply rollAlgi; intros R reveal fo ih d fd; destruct fd; [ idtac | fromCons] | exact (toListi _ xs)].
+    apply ind; clear ind; [apply FunConsti | apply rollAlgi; intros R fo ih d fd; destruct fd; [ idtac | fromCons] | exact (toListi _ xs)].
 
 Arguments nilCons{A}{h}{t} e.
 Arguments consCons{A}{h1}{h2}{t1}{t2} e.

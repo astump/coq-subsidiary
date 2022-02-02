@@ -19,16 +19,16 @@ Section ChunksOf.
   Variable eqb : A -> A -> bool.
   
   (* this assumes that s is the predecessor of the desired chunk size *)
-  Definition ChunksOf(s : nat)(C : Set)
-    : Alg (ListF A) C (Const (list (list A))) :=
-    MapThroughAlg (fun R fo hd tl => let (l,r) := splitAtr fo s tl in (hd :: l, r)) C.
+  Definition ChunksOf(s : nat)
+    : Alg (ListF A) (Const (list (list A))) :=
+    MapThroughAlg (fun R fo hd tl => let (l,r) := splitAtr fo s tl in (hd :: l, r)).
 
   Definition chunksOfr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                       (s : nat)(xs : R) : list (list A) :=
     match s with
       O => []
     | S n =>
-      fo (Const (list (list A))) (FunConst (list (list A))) (ChunksOf n R) xs
+      fo (Const (list (list A))) (FunConst (list (list A))) (ChunksOf n) xs
     end.
 
   Definition chunksOf : nat -> List A -> list (list A) :=

@@ -30,10 +30,10 @@ Section Span.
        end
     }.
   
-  Definition SpanAlg(p : A -> bool)(C : Set)
-    : Alg (ListF A) C SpanF :=
+  Definition SpanAlg(p : A -> bool)
+    : Alg (ListF A) SpanF :=
     rollAlg 
-      (fun R reveal fo span xs => 
+      (fun R fo span xs => 
          match xs with
            Nil => SpanNoMatch 
          | Cons hd tl =>
@@ -48,7 +48,7 @@ Section Span.
 
   Definition spanhr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                   (p : A -> bool)(xs : R) : SpanF R :=
-    fo SpanF SpanFunctor (SpanAlg p R) xs.
+    fo SpanF SpanFunctor (SpanAlg p) xs.
 
   Definition spanh(p : A -> bool)(xs : List A) : SpanF (List A) :=
     spanhr (fold (ListF A)) p xs.

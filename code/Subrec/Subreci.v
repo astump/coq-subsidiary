@@ -41,16 +41,15 @@ Section Subreci.
 (* -------------------------------------------------------------------------------- *)
   
   Definition FoldTi(alg : KAlgi)(C : kMo) : kMo :=
-    fun d => forall (X : kMo -> kMo) (xmap : fmapiT Subrec X), alg C X -> C d -> X C d.
+    fun d => forall (X : kMo -> kMo) (xmap : fmapiT Subrec X), alg X -> C d -> X C d.
 
 (* -------------------------------------------------------------------------------- *)
 (* Algebra *)
 (* -------------------------------------------------------------------------------- *)
 
 
-Definition AlgFi(A: KAlgi)(C : kMo)(X : kMo -> kMo) : Set :=
+Definition AlgFi(A: KAlgi)(X : kMo -> kMo) : Set :=
   forall (R : kMo)
-    (reveal : (forall (d : Subrec), R d -> C d))        
     (fo : (forall (d : Subrec), FoldTi A R d))
     (ih : (forall (d : Subrec), R d -> X R d))
     (d : Subrec),
@@ -62,32 +61,27 @@ Definition monoAlgi : forall (A B : KAlgi),
     CastAlgi Subrec A B ->
     CastAlgi Subrec (AlgFi A) (AlgFi B) :=
   fun A B cAB =>
-    fun C X algf R reveal fo  =>
-      algf R reveal (fun i' X xmap alg => fo i' X xmap (cAB _ _ alg)).
+    fun X algf R fo  =>
+      algf R (fun i' X xmap alg => fo i' X xmap (cAB _ alg)).
 
-Definition rollAlgi : forall {C : kMo} {X : kMo -> kMo}, AlgFi Algi C X -> Algi C X :=
- fun C X i => inMuAlgi Subrec AlgFi i.
+Definition rollAlgi : forall {X : kMo -> kMo}, AlgFi Algi X -> Algi X :=
+ fun X i => inMuAlgi Subrec AlgFi i.
 
-Definition unrollAlgi : forall {C : kMo} {X : kMo -> kMo}, Algi C X -> AlgFi Algi C X :=
-  fun C X => outMuAlgi Subrec AlgFi monoAlgi.
-
-Definition antiAlgi : forall {A B : kMo} {X : kMo -> kMo},
-    (forall (i : Subrec), (A i -> B i)) -> Algi B X -> Algi A X :=
-  fun A B X f alg =>
-    rollAlgi (fun R reveal => unrollAlgi alg R (fun d rd => f d (reveal d rd))).
+Definition unrollAlgi : forall {X : kMo -> kMo}, Algi X -> AlgFi Algi X :=
+  fun X => outMuAlgi Subrec AlgFi monoAlgi.
 
 (* -------------------------------------------------------------------------------- *)
 (* ... *)
 (* -------------------------------------------------------------------------------- *)
 
-Definition SubrecFi(C : kMo) : kMo := fun d => forall (X : kMo -> kMo) (xmap : fmapiT Subrec X), Algi C X -> X C d.
+Definition SubrecFi(C : kMo) : kMo := fun d => forall (X : kMo -> kMo) (xmap : fmapiT Subrec X), Algi X -> X C d.
 Definition Subreci := Mui Subrec SubrecFi.
 
 Definition SubrecFmapi : fmapiT Subrec SubrecFi.
   intros A B f i d.
   intros X xmap alg.
   unfold SubrecFi in d.
-  exact (xmap A B f i (d X xmap (antiAlgi f alg))).
+  exact (xmap A B f i (d X xmap alg)).
 Defined.
 
 Definition rolli :=
@@ -107,9 +101,8 @@ Definition foldi(i : Subrec) : FoldTi Algi Subreci i := fun X xmap alg d => unro
 Definition inni(i : Subrec)(fd : Fi Subreci i) : Subreci i :=
   rolli i 
             (fun X xmap alg =>
-               let reveal := fun d1 x => x in
                let IH := fun i1 d => unrolli i1 d X xmap alg in
-               unrollAlgi alg Subreci reveal foldi IH i fd
+               unrollAlgi alg Subreci foldi IH i fd
             ).
 
 Definition outi{R:Subrec -> Prop}
@@ -117,7 +110,7 @@ Definition outi{R:Subrec -> Prop}
            (i :Subrec) : R i -> Fi R i :=
   foi i Fi FiMap
             (rollAlgi
-               (fun R rev fo ih i' df => df)).
+               (fun R fo ih i' df => df)).
 
 
 

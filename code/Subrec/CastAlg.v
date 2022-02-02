@@ -9,5 +9,5 @@ Require Import Kinds.
 (* -------------------------------------------------------------------------------- *)
 
 Definition CastAlg(alg1 alg2 : KAlg) :=
-  forall (C : Set) (X : Set -> Set), alg1 C X -> alg2 C X.
+  forall (X : Set -> Set), alg1 X -> alg2 X.
 

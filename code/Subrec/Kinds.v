@@ -1,2 +1,2 @@
-Definition KAlg  : Type := Set -> (Set -> Set) -> Set.
+Definition KAlg  : Type := (Set -> Set) -> Set.
 

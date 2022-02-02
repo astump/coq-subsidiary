@@ -19,9 +19,8 @@ Section MapThrough.
 
   Context {A : Set}.
 
-  Definition MapThroughAlg{B : Set}(f:mappedT A B)
-             (C : Set) : Alg (ListF A) C (Const (list B)) :=
-    rollAlg (fun R reveal fo mapThrough xs => 
+  Definition MapThroughAlg{B : Set}(f:mappedT A B) : Alg (ListF A) (Const (list B)) :=
+    rollAlg (fun R fo mapThrough xs => 
       match xs with
         Nil => []
       | Cons hd tl =>
@@ -31,7 +30,7 @@ Section MapThrough.
 
   Definition mapThroughr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                         {B : Set}(f:mappedT A B) : R -> list B :=
-    fo (Const (list B)) (FunConst (list B)) (MapThroughAlg f R).
+    fo (Const (list B)) (FunConst (list B)) (MapThroughAlg f).
 
   Definition mapThrough{B : Set}(f:mappedT A B) : List A -> list B :=
     mapThroughr (fold (ListF A)) f.
