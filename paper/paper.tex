@@ -179,11 +179,12 @@ in predicative theories like Agda's.
 We begin by summarizing the interface our derivation provides for
 subsidiary recursion (Section~\ref{sec:interface}), and we then
 present some examples (Section~\ref{sec:examples}).  We next explain
-how the interface is actually implemented (Section~\ref{sec:deriv}),
+the implementation of our interface (Section~\ref{sec:deriv}),
 including our definition of retractive-positive recursive types
-(Section~\ref{sec:mu}).  We then cover the interface for subsidiary
+% (Section~\ref{sec:mu})
+.  We then cover the interface for subsidiary
 induction (Section~\ref{sec:interfacei}), and give some example proofs
-using it (Section~\ref{sec:examplesi}). We conclude with a discussion
+that use it (Section~\ref{sec:examplesi}). We conclude with a discussion
 of related work (Section~\ref{sec:related}).
 
 All presented derivations have been checked with Coq version 8.13.2.  The code may be
@@ -203,24 +204,32 @@ for subsidiary recursion.
 
 Our approach is within a long line of work using ideas from universal
 algebra and category theory to describe inductive datatypes and their
-recursion principles (cf.~\cite{traytel12,cockett92,hagino87}).  On this approach, one describes transformations
-to be performed on data as \emph{algebras}, which can then be
-\textit{folded} over data.  The simplest form of algebras, namely
-$F$-algebras for functor $F$, are morphisms from $F\ A$ to $A$, for carrier object
-$A$.  From a programming perspective, an $F$-algebra is given input of
-type $F\ A$, and must compute a result of type $A$.  An example of $F$
-is the signature functor for lists, which we will use below:
-
+recursion principles (cf.~\cite{traytel12,cockett92,hagino87}). Under
+this approach, inductive datatypes are equipped with a signature
+functor which explains how to 'unroll' one layer of the type. The
+signature functor for lists is:
 \begin{minted}{coq}
-Inductive ListF(X : Set) : Set :=
+Inductive ListF (X : Set) : Set :=
 | Nil : ListF X
 | Cons : A -> X -> ListF X.
 \end{minted}
-
+Transformations on data with functor $F$ are described as
+\emph{algebras} which are then \textit{folded} over data.  The
+simplest form of algebras are morphisms from $F\ A$ to $A$, for some
+carrier object $A$.  From a programming perspective, an $F$-algebra is
+given input of type $F\ A$, and must compute a result of type $A$. The
+$ListF$-algebra for computing the length of a list is:
+\begin{minted}{coq}
+Definition LengthAlg (l : ListF nat) : nat :=
+match l with
+| Nil => 0
+| Cons a len' => 1 + len'
+end.
+\end{minted}
 Algebras for our subsidiary recursion are more complex than
 $F$-algebras.  Let us begin with an informal explanation.  For reasons
 we will explain further below, the carrier of the algebra will be a
-functor \verb|X : Set -> Set|.  The algebra is presented with:
+functor \verb|X : Set -> Set|.  Our algebras are presented with:
 
 \begin{itemize}
 \item a type \verb|R : Set|, which will be this recursion's view of the datatype.
@@ -233,23 +242,23 @@ functor \verb|X : Set -> Set|.  The algebra is presented with:
 
 \noindent The algebra is then required to produce a value of type \verb|X R|.
 
-We will use Coq inductive types for the signature functors \verb|F| of
-various datatypes, thus enabling recursions to use Coq's
-pattern-matching on the subdata structure \verb|d|.  So the style of
-coding against this interface retains a similar feel to structural
-recursion.  Unlike with structural termination, though, the interface
-here is type-based and hence compositional.
+We use Coq inductive types for the signature functors \verb|F| of
+various datatypes. This allows algebras to use Coq's
+pattern-matching on the subdata structure \verb|d|, enabling a style
+of coding that retains a similar feel to structural recursion. Unlike
+structurally recursive functions, however, this interface uses a
+type-based (and hence compositional) criteria to ensure termination.
 
 We have previously dubbed this interface a \emph{recursion
-universe}~\cite{stump20}.  As in other domains using the term
+  universe}~\cite{stump20}.  As in other domains using the term
 ``universe'', we have a kind of space (here, \verb|R|), which one
-cannot escape using certain operations.  Other examples are the
-ordinal $\epsilon_0$ and $\omega^-$, and the physical universe and
-traveling at the speed of light.  Staying in the recursion universe is
-good, because we may recurse (via \verb|rec|) on any value of type
-\verb|R|.  Some points must still be explained: why \verb|X| has type
-\verb|Set -> Set|, and the definition of \verb|FoldT|.  Let us see
-these details next.
+cannot escape using the provided operations.  Other examples include the
+ordinal $\epsilon_0$ and operator $\omega^-$, and the physical
+universe and traveling at the speed of light.  Staying in the
+recursion universe is good, because we may recurse (via \verb|rec|) on
+any value of type \verb|R|.  Some points must still be explained: in
+particular why \verb|X| has type \verb|Set -> Set|, and the definition
+of \verb|FoldT|. We consider those details next.
 
 \subsection{Types for subsidiary recursion (\texttt{Subrec.v}, \texttt{List.v})}
 
@@ -263,12 +272,14 @@ Definition mkCons (hd : A) (tl : List) : List := inList (Cons hd tl).
 Definition toList : list A -> List.
 Definition fromList : List -> list A.
 \end{minted}
-  \caption{Some basics from \texttt{List.v}, specializing the functor-generic derivation of subsidiary recursion to lists (\texttt{List.v})}
+  \caption{Some basics from \texttt{List.v}, specializing the
+    functor-generic derivation of subsidiary recursion to
+    lists parameterized by an element type \texttt{A}  (\texttt{List.v})}
   \label{fig:listf}
 \end{figure}
 
-The type over which one can recurse with our scheme of subsidiary
-recursion is called \verb|Subrec|.  It is parametrized by a signature
+The type over which one can recurse using our subsidiary
+recursion scheme is called \verb|Subrec|.  It is parametrized by a signature
 functor \verb|F| of type \verb|Set -> Set|.  \verb|Subrec| comes with
 \verb|inn : F Subrec -> Subrec|, which behaves computationally like a
 constructor.  We will later derive an induction principle for this type
@@ -277,18 +288,18 @@ retractive-positive recursive types, to take a fixed-point of a
 construction based on \verb|F|.  We present these recursive types in
 Section~\ref{sec:mu} below.
 
-For our examples, we will consider the specialization to the case of
-lists, parametrized by the type \verb|A| of elements.  In general, to
-use our development to get subsidiary recursion over some datatype,
-one must define a signature functor for the datatype.  For lists, this
-is \verb|ListF|, which we saw at the start of Section~\ref{sec:interface}.  \verb|List| is defined to
-be \verb|Subrec|, with \verb|F| instantiated to \verb|ListF A|.  This
+Our examples specialize this scheme to the case of polymorphic lists,
+presented in Figure~\ref{fig:listf}.  In general, to use our
+development to get subsidiary recursion over some datatype, one must
+define a signature functor for the datatype, e.g., \verb|ListF| from
+the start of this section. We define \verb|List| to be
+\verb|Subrec| with \verb|F| instantiated to \verb|ListF A|.  This
 type \verb|List| is not to be confused with the type \verb|list| of
-lists in Coq's standard library.  As noted previously, our development
+lists from Coq's standard library.  As noted previously, our development
 is meant to be used in extension of existing inductive datatypes, not
 replacing them.  The figure also shows constructors \verb|mkNil| and
 \verb|mkCons| for \verb|List|, and typings for conversion functions
-between \verb|List| and \verb|list| (code elided).
+between \verb|List| and \verb|list| (we elide their definitions).
 
 
 \subsection{Algebras for subsidiary recursion}
@@ -302,8 +313,8 @@ type \verb|AlgF|.  The fixed-point is taken using \verb|MuAlg|, which
 implements our retractive-positive recursive types
 (Section~\ref{sec:mu}) at kind \verb|KAlg|.
 
-We need a fixed-point here due to the input \verb|fold| (\verb|Algf|)
-of type \verb|FoldT Alg R|.  This is the type for fold functions which
+We need a fixed-point here due to the \verb|fold| parameter
+\verb|AlgF| expecting an argument of type \verb|FoldT Alg R|.  This is the type for fold functions which
 apply algebras (\verb|Alg|) to data of type \verb|R|.  The variable \verb|Alg| occurs only positively (but not
 strictly positively) in \verb|AlgF|, because it occurs negatively in
 \verb|FoldT Alg R| which occurs negatively in \verb|AlgF Alg X|.  So
@@ -339,25 +350,25 @@ Let us look at \verb|AlgF|.  As noted already, each recursion is based
 on an abstract type \verb|R|, representing the data upon which we will
 recurse.  This is the first argument to a value of type
 \verb|AlgF Alg X|.  Reasoning parametrically, an algebra can assume
-nothing about \verb|R| except that it supports the following
-operations.  Next we have a local
-\texttt{fold} function, which will allow us to fold another algebra over data
+nothing about \verb|R| except that it supports the
+\verb|fold| and \verb|rec| operations that follow. The first is a local
+\verb|fold| function, which allows us to fold another algebra over data
 of type \verb|R|.  We will use \verb|fold| to initiate subsidiary
-recursions.  Then there is \verb|rec|, for recursive calls on data of
-type \verb|R|.
+recursions.  The second, \verb|rec|, is used to make recursive calls
+on values of type \verb|R|.
 
 As noted already, for subsidiary recursion, algebras have a carrier
 \verb|X| which depends (functorially) on a type.  When we fold an
 algebra using a fold function (either global or local) of type
 \verb|FoldT Alg C|, (i) recursive calls may compute a result of type
-\verb|X R|, mentioning the abstract type \verb|R| for that recursion;
+\verb|X R|, mentioning the abstract type \verb|R| inside the recursion;
 and (ii) outside that recursion, the result will have type \verb|X C|.
 Having a functor for the carrier of the algebra gives us the
 flexibility to type results inside a recursion with the abstract type
 \verb|R|, but view those results as having the type \verb|C| outside
-the recursion.  The function \verb|fold| in the figure initiates
-top-level folds.  We also can have functions
-between \verb|Alg| and its \verb|Algf|-unfolding.  We will
+the recursion.  The function \verb|fold| in Figure~\ref{fig:algf} initiates
+top-level folds.  We can also have functions
+between \verb|Alg| and its \verb|AlgF|-unfolding.  We will
 return to the code for \verb|Subrec.v| in Section~\ref{sec:deriv}.
 
 Finally, for a recursion scheme, one would like to see not just the
