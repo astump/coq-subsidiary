@@ -747,16 +747,16 @@ types.
 As we have seen, our definitions require a form of positive-recursive
 types, to allow algebras to accept fold functions that themselves
 require algebras, and also for the definition of \verb|Subrec| (which
-we will see in more detail in the next section).  Full
+we will see in more detail in the next section).  Unfortunately, Full
 positive-recursive types are incompatible with Coq's type
 theory~\cite{coquand88}.  One can impose some restrictions on large
 eliminations which then enable positive-recursive
 types~\cite{blanqui05}, but this requires changing the underlying
-theory.  Here we exploit Coq's
-impredicative polymorphism for a different solution.
+theory.  Here we exploit Coq's impredicative polymorphism to obtain a
+different solution.
 
-Assume \verb|F : Set -> Set|, with an \verb|fmap| function
-(morphism part of the functor) of type
+Our starting point is a Functor \verb|F : Set -> Set| equipped with an
+\verb|fmap| function (functor morphism) of type
 \begin{minted}{coq}
 forall A B : Set, (A -> B) -> F A -> F B
 \end{minted}
@@ -764,17 +764,15 @@ forall A B : Set, (A -> B) -> F A -> F B
 \begin{minted}{coq}
 fmapId : forall (A : Set)(d : F A), fmap (fun x => x) d = d
 \end{minted}
-\noindent Then we make the definitions of Figure~\ref{fig:mu}.  The critical
-idea is embodied in the definition of \verb|Mu|.  Ideally, we would like
-to have a definition like
+\noindent Ideally, we would like to have a definition like
 \begin{minted}{coq}
   Inductive Mu' : Set := mu' : F Mu' -> Mu'.
 \end{minted}
-\noindent This is exactly what is used in approaches to modular
-datatypes in functional programming, like
-Swierstra's~\cite{swierstra08}.  But this definition is (rightly)
-rejected by Coq, as instantiations of
-\verb|F| that are not strictly positive would be unsound.
+\noindent This is exactly what is used in many approaches to modular
+datatypes in functional programming, as in
+Swierstra~\cite{swierstra08}.  But this definition is (rightly)
+rejected by Coq, as instantiations of \verb|F| that are not strictly
+positive would be unsound.
 
 \begin{figure}
 \begin{minted}{coq}
@@ -795,19 +793,18 @@ rejected by Coq, as instantiations of
 \label{fig:mu}
 \end{figure}
 
-
-The definition of \verb|Mu| in Figure~\ref{fig:mu} weakens
-this to a strictly positive approximation. Instead of taking in \verb|F Mu|, constructor \verb|mu|
-accepts an input of type \verb|F R|, for some type \verb|R| for which
-we have a function of type \verb|R -> Mu|.  The impredicative
-quantification of \verb|R| is essential here: we will instantiate it with
-\verb|Mu| itself in the definition of \verb|inMu|
-(Figure~\ref{fig:mu}).  So this approach would not work in a
-predicative theory like Agda's.  The quantification of \verb|R| can be
-seen as applying a technique due to Mendler, of introducing
-universally quantified variables for problematic type occurrences, to
-a datatype constructor.  We will review this in
-Section~\ref{sec:related}.
+Instead, we define \verb|Mu| as in Figure~\ref{fig:mu}, weakening
+\verb|Mu'| to a strictly positive approximation. Instead of taking
+\verb|F Mu|, the constructor \verb|mu| accepts an input of type
+\verb|F R|, for some type \verb|R| for which we have a function of type
+\verb|R -> Mu|.  The impredicative quantification of \verb|R| is
+essential here: we will instantiate it with \verb|Mu| itself in the
+definition of \verb|inMu| (Figure~\ref{fig:mu}).  Thus, this approach
+would not work in a predicative theory like Agda's.  The
+quantification of \verb|R| can be seen as applying a technique due to
+Mendler, of introducing universally quantified variables for
+problematic type occurrences, to a datatype constructor.  We will
+review this connection further in Section~\ref{sec:related}.
 
 Returning to Figure~\ref{fig:mu}, we have functions \verb|inMu| and
 \verb|outMu|, which make \verb|F Mu| a retraction (\verb|outIn|) of
@@ -817,17 +814,18 @@ composition cannot be proved to be the identity, because of the basic
 problem of \textbf{noncanonicity} that arises with this definition.
 
 For a simple example: suppose we instantiate \verb|F| with
-\verb|ListF| (of Figure~\ref{fig:listf}).  Our derivation uses a
-different type that wraps \verb|F|, but this will show the issue in a
-simple form.  Let us temporarily define \verb|List A| as
+\verb|ListF| (from Section~\ref{sec:recu}).  Our derivation uses a
+different type that wraps \verb|F|, but using \verb|ListF|
+demonstrates a simple form of the underlying issue.  Let us temporarily define \verb|List A| as
 \verb|Mu (ListF A)| (again, for subsidiary recursion do not use just
 \verb|ListF| directly).  The canonical way to define the empty list
-would be, implicitly instantiating \verb|F| to \verb|ListF A|,
+would be like so:
 \begin{minted}{coq}
 Definition mkNil := mu (List A) (fun x => x) (NilF A)
 \end{minted}
-\noindent But given this, there are infinitely many other equivalent
-definitions.  For any \verb|Q : Set|, we could take
+\noindent Note that there are infinitely many other equivalent
+definitions of \verb|mkNil|.  For any arbitrary \verb|Q : Set|, for
+example, we could define
 \begin{minted}{coq}
 Definition mkNil' := mu Q (fun x => mkNil) (NilF A)
 \end{minted}
@@ -835,11 +833,11 @@ Definition mkNil' := mu Q (fun x => mkNil) (NilF A)
 \verb|f : A -> B|, if we apply \verb|outMu| (of Figure~\ref{fig:mu})
 to \verb|mkNil'| or \verb|mkNil|, we will get \verb|NilF (List A)|.
 But critically, \verb|mkNil| and \verb|mkNil'| are not equal, neither
-definitionally nor provably.  One can define a function that puts
-\verb|Mu| values in normal form by folding \verb|inMu| over them.
-Then \verb|mkNil| and \verb|mkNil'| will have the same normal form,
-and be equivalent in that sense.  But the fact that they are not
-provably equal is what we term noncanonicity.
+definitionally nor provably.  Of course, one could then define a
+function that puts \verb|Mu| values in normal form by folding
+\verb|inMu| over them.  Then \verb|mkNil| and \verb|mkNil'| would be
+equivalent, in the sense that they have the same normal form, but they
+would still not be provably equal.
 
 Noncanonicity must be handled carefully when reasoning about functions
 defined with our interface.  We will see an example in
@@ -850,10 +848,10 @@ exposition of our implementation of subsidiary recursion.
 \label{sec:subrecimpl}
 
 The type \verb|Subrec| is defined in Figure~\ref{fig:subrec}, as a
-fixed-point of \verb|SubrecF : Set -> Set|.  We take this fixed-point
-with \verb|Mu|, discussed in the previous section, and obtain \verb|roll|
+fixed-point of \verb|SubrecF : Set -> Set|.  We build this fixed-point
+using \verb|Mu| from the previous section, and obtain \verb|roll|
 and \verb|unroll| functions between \verb|SubrecF Subrec| and \verb|Subrec|.
-Unrolling \verb|Subrec| gives us the type
+Unrolling a \verb|Subrec| value gives us a term of type
 \begin{minted}{coq}
 forall (X : Set -> Set) (FunX : Functor X), Alg X -> X Subrec
 \end{minted}
@@ -863,12 +861,12 @@ for all algebras with functorial carrier
 generalization of the functor-generic type
 $\forall\ X.\ \textit{Alg}\ X \to X$ for the Church encoding, where
 $\textit{Alg}\ X$ is $F\ X \to X$.  We elide the implementation of the
-\verb|roll| and \verb|unroll| functions, but note that \verb|unroll|
+\verb|roll| and \verb|unroll| functions, but we note that \verb|unroll|
 makes use of functoriality of carriers \verb|X|.
 
 \begin{figure}
 \begin{minted}{coq}
-Definition SubrecF(C : Set) :=
+Definition SubrecF(C : Set) : Set :=
   forall (X : Set -> Set) (FunX : Functor X), Alg X -> X C.
 Definition Subrec := Mu SubrecF.
 Definition roll: SubrecF Subrec -> Subrec.
@@ -877,41 +875,6 @@ Definition unroll: Subrec -> SubrecF Subrec.
 \caption{Definition of \texttt{Subrec} as a fixed-point of \texttt{SubrecF} (\texttt{Subrec.v})}
 \label{fig:subrec}
 \end{figure}
-
-The rest of the interface for \verb|Subrec| is shown in
-Figure~\ref{fig:subrecb}.  To \verb|fold| an algebra
-\verb|alg| with carrier \verb|X| (with \verb|fmap| function given by
-\verb|FunX|) over \verb|d : Subrec|, we \verb|unroll| the
-definition of \verb|Subrec| and apply that to the algebra (with its
-carrier).
-
-More interesting is the definition of \verb|inn|, which is the
-critical point where the recursion universe is implemented.  To create
-a value of type \verb|Subrec| from data of type \verb|F Subrec|, the
-definition of \verb|inn| \verb|roll|s a value of type
-\verb|SubrecF Subrec| (we saw this type unfolded at the start of
-this section).  This value takes in a carrier
-\verb|X|, its fmap function \verb|xmap|, and an algebra \verb|alg|
-with that carrier.  It will then call \verb|alg| (after \verb|unroll|ing
-it) with implementations for the components of the recursion universe
-(cf. Section~\ref{sec:recu}, also Figure~\ref{fig:algf}):
-\begin{itemize}
-\item \verb|Subrec| is passed as the value for the abstract type \verb|R|; this is what enables all
-  the rest of the components to have the desired types, since we will pass values that have \verb|Subrec|
-  where the interface mentions \verb|R|.
-\item The function \verb|fold : FoldT Alg Subrec| is passed as
-  the fold function of type \verb|FoldT Alg R|.
-\item For the \verb|rec : R -> X R| function, we pass \verb|(fold X xmap alg) : Subrec -> X Subrec|.
-\item For the subdata structure of type \verb|F R|, we pass \verb|d : F Subrec|.
-\end{itemize}
-
-Finally, Figure~\ref{fig:subrecb} defines \verb|out| as a subsidiary
-recursion, given a fold function.
-Outside the recursion, \verb|d| has type \verb|F R|; inside the
-recursion it has type \verb|F R'| where \verb|R'| is the abstract type
-of the subsidiary recursion.  So \verb|out| implements the idea that
-unfolding an abstract type one step is just a trivial case of
-subsidiary recursion.
 
 \begin{figure}
 \begin{minted}{coq}
@@ -929,42 +892,41 @@ Definition out{R:Set}(fo:FoldT Alg R) : R -> F R :=
 \label{fig:subrecb}
 \end{figure}
 
+The rest of the interface for \verb|Subrec| is shown in
+Figure~\ref{fig:subrecb}.  To \verb|fold| an algebra
+\verb|alg| with carrier \verb|X| (with the \verb|fmap| function given by
+\verb|FunX|) over \verb|d : Subrec|, we \verb|unroll| the
+definition of \verb|Subrec| and apply that to the algebra (with its
+carrier).
 
-\section{Interface for subsidiary induction (\texttt{Subreci.v})}
-\label{sec:interfacei}
+More interesting is the definition of \verb|inn|, which is the
+critical point where the recursion universe is implemented.  To create
+a value of type \verb|Subrec| from data of type \verb|F Subrec|, the
+definition of \verb|inn| \verb|roll|s a value of type
+\verb|SubrecF Subrec| (we saw this type unfolded at the start of
+this section).  This value takes in a carrier
+\verb|X|, its fmap function \verb|xmap|, and an algebra \verb|alg|
+with that carrier.  It will then call \verb|alg| (after \verb|unroll|ing
+it) with implementations for the components of the recursion universe
+(cf. Section~\ref{sec:recu}, also Figure~\ref{fig:algf}):
+\begin{itemize}
+\item \verb|Subrec| is passed as the value for the abstract type \verb|R|; this is what enables all
+  the rest of the components to have the desired types, since we will
+  pass values that have type \verb|Subrec|
+  where the interface mentions \verb|R|.
+\item The function \verb|fold : FoldT Alg Subrec| is passed as
+  the fold function of type \verb|FoldT Alg R|.
+\item For the \verb|rec : R -> X R| function, we pass \verb|(fold X xmap alg) : Subrec -> X Subrec|.
+\item For the subdata structure of type \verb|F R|, we pass \verb|d : F Subrec|.
+\end{itemize}
 
-We have seen how to write subsidiary recursions in Coq.  But can one
-reason about these?  To wrap up this paper, we will briefly see the
-interface to our development of subsidiary induction in Coq, and
-example proofs written using this interface.  Subsidiary induction is
-the natural extension of subsidiary recursion, which worked over
-\verb|Set|s, to \verb|Subrec|-predicates.  The development is
-parametrized by a functor \verb|F| and a functor
-\verb|Fi : (Subrec -> Prop) -> (Subrec -> Prop)| over
-\verb|Subrec|-indexed propositions (i.e., predicates).  Just as
-functors need an \verb|fmap| function, we here need an indexed
-version, of type \verb|fmapiT Subrec Fi| (definition elided.)
-
-The central definitions for the type \verb|Subreci : Subrec -> Prop|
-are given in Figure~\ref{fig:subreci}.  Where having a value \verb|x|
-of \verb|Subrec| entitles us to define subsidiary recursions to
-inhabit types \verb|X Subrec|, a value of type \verb|Subreci x| lets
-us prove properties of \verb|x| by subsidiary induction.  Briefly:
-\verb|kMo| is the kind for \emph{motives}, namely predicates on
-\verb|Subrec|~\cite{mcbride00}.  \verb|KAlgi| is the kind for indexed
-algebras.  \verb|FoldTi| is the indexed version of \verb|FoldT|: it
-expresses provability of \verb|X C| for \verb|d|, based on an indexed
-algebra and a value of type \verb|C d|, where \verb|C| is the (indexed) anchor
-type.  \verb|AlgFi| and \verb|Algi| are indexed versions
-of the algebras we saw for recursion.  The \verb|rec| function
-(Figure~\ref{fig:algf}) has now become an induction hypothesis: given
-any \verb|d| where \verb|R d| holds, \verb|ih| proves \verb|X R d|.  A
-value of type \verb|R d| is thus a license to induct on \verb|d|.
-Finally, the algebra is given a subdata structure indexed by
-\verb|d : Subrec|, and must produce a proof of \verb|X R d|.  \verb|Subreci|
-is defined as the suitably indexed fixed-point of \verb|SubrecFi|, which
-is the natural indexed version of \verb|SubrecF|.
-
+Finally, Figure~\ref{fig:subrecb} defines \verb|out| as a subsidiary
+recursion, given a fold function.
+Outside the recursion, \verb|d| has type \verb|F R|; inside the
+recursion it has type \verb|F R'| where \verb|R'| is the abstract type
+of the subsidiary recursion.  Intuitively, \verb|out| implements the idea that
+unfolding an abstract type one step is just a trivial case of
+subsidiary recursion.
 
 \begin{figure}
 \begin{minted}{coq}
@@ -993,6 +955,41 @@ Definition inni(i : Subrec)(fd : Fi Subreci i) : Subreci i.
 \caption{Interface for subsidiary induction (\texttt{Subreci.v})}
 \label{fig:subreci}
 \end{figure}
+
+\section{Interface for subsidiary induction (\texttt{Subreci.v})}
+\label{sec:interfacei}
+
+We have now covered how to write subsidiary recursions in Coq.  But can one
+reason about these?  To wrap up our development, we briefly consider our
+interface for subsidiary induction in Coq, and present some
+example proofs that use this interface.  Subsidiary induction is
+the natural extension of subsidiary recursion, which worked over
+\verb|Set|s, to \verb|Subrec|-predicates.  The development is
+parametrized by a functor \verb|F| and a functor
+\verb|Fi : (Subrec -> Prop) -> (Subrec -> Prop)| over
+\verb|Subrec|-indexed propositions (i.e., predicates).  Just as
+functors need an \verb|fmap| function, here we need an indexed
+version, of type \verb|fmapiT Subrec Fi| (definition elided.)
+
+The central definitions for the type \verb|Subreci : Subrec -> Prop|
+are given in Figure~\ref{fig:subreci}.  Where having a value \verb|x|
+of \verb|Subrec| entitles us to define subsidiary recursions to
+inhabit types \verb|X Subrec|, a value of type \verb|Subreci x| lets
+us prove properties of \verb|x| by subsidiary induction.  Briefly:
+\verb|kMo| is the kind for \emph{motives}, namely predicates on
+\verb|Subrec|~\cite{mcbride00}.  \verb|KAlgi| is the kind for indexed
+algebras.  \verb|FoldTi| is the indexed version of \verb|FoldT|: it
+expresses provability of \verb|X C| for \verb|d|, based on an indexed
+algebra and a value of type \verb|C d|, where \verb|C| is the (indexed) anchor
+type.  \verb|AlgFi| and \verb|Algi| are indexed versions
+of the algebras we saw for recursion.  The \verb|rec| function from
+Figure~\ref{fig:algf} is now an induction hypothesis: given
+any \verb|d| where \verb|R d| holds, \verb|ih| proves \verb|X R d|.  A
+value of type \verb|R d| is thus a license to induct on \verb|d|.
+Finally, the algebra is given a subdata structure indexed by
+\verb|d : Subrec|, and must produce a proof of \verb|X R d|.  \verb|Subreci|
+is defined as the suitably indexed fixed-point of \verb|SubrecFi|, which
+is the natural indexed version of \verb|SubrecF|.
 
 For lists, we instantiate \verb|Fi| with \verb|ListFi|, shown in
 Figure~\ref{fig:listfi}.  This is just the indexed version of
@@ -1023,12 +1020,12 @@ Definition ListFoldTi(R : List -> Prop)(d : List) : Prop :=
 \section{Examples of subsidiary induction}
 \label{sec:examplesi}
 
-For proving the main theorem about run-length encoding, we need
-several lemmas about \verb|span|, shown in Figure~\ref{fig:spanlem}.
+To prove the main theorem about our run-length encoding, we need
+the three lemmas about \verb|span| shown in Figure~\ref{fig:spanlem}.
 For lack of space, we just state the properties.  The first says that
 appending the results of a call to span returns the original list
 (module some conversions to \verb|list| from \verb|List|).  The second
-uses the inductive type \verb|Forall| from Coq's standard library to
+uses the inductive proposition \verb|Forall| from Coq's standard library to
 state that all the elements of the prefix returned by \verb|span|
 satisfy \verb|p|.  These lemmas are proved using indexed algebras with
 constant (indexed) carriers.  In contrast, \verb|GuardPresF| uses its
@@ -1036,7 +1033,7 @@ argument \verb|S| to express that whenever \verb|spanh| returns a
 suffix \verb|r|, that suffix satisfies \verb|S|.  This enables us to
 invoke an outer induction hypothesis on this suffix, when reasoning
 subsidiarily about \verb|span|.  Using these lemmas, we can write a
-short proof by subsidiary induction of the following, where
+short proof by subsidiary induction of the following theorem, where
 \verb|rld : list (nat * A) -> list A| is the obvious decoding
 function:
 
@@ -1111,20 +1108,21 @@ prove (possibly with automated help) their termination
 afterwards~\cite{krauss}.  These tools all support well-founded
 recursion, but in constructive type theory, evidence of
 well-foundedness then propagates through code.  In contrast, our
-approach here, while less general, does not clutter code with proofs.
+approach here, while less general, does not pollute computational code
+with proof terms.
 Subsidiary recursion can be seen as a generalization of \emph{nested
 recursion}, which allows recursive calls of the form
 \verb|f (f x)|~\cite{krauss10}.  In subsidiary recursion, these are
 generalized to the form \verb|f (g x)|, where \verb|g| could be
-\verb|f| or another recursively defined function.  For more on
-partiality and recursion in theorem provers, see~\cite{bove+16}.
+\verb|f| or another recursively defined function.  Bove et al. have a
+more complete discussion of partiality and recursion in theorem provers~\cite{bove+16}.
 
 Our work contributes to the program proposed by Owens and Slind, of
 broadening the scope of functional programs that can be accommodated
 in ITPs~\cite{owens+08}.  The goal of terminating recursion has been
 advocated in the literature on programming languages under the name
 \emph{strong functional programming}~\cite{turner95}.  Our method is
-similar to the technique of sized types, in providing a type-based
+similar to the technique of sized types, by providing a type-based
 method for termination~\cite{barthe04}.  With sized types, datatypes
 are indexed with abstract sizes, which must then be propagated through
 code, using dependent types.  In contrast, our approach relies just on
@@ -1160,7 +1158,7 @@ a terminating recursion scheme for existing datatypes.
 
 We have seen a derivation in Coq of a scheme for terminating
 subsidiary recursion, where recursions may be nested and outer
-recursive calls may be made on results of inner recursions.  We saw
+recursive calls may be made on the results of inner recursions.  We saw
 examples invoking the \verb|span| function as a subsidiary recursion,
 for functions \verb|wordsBy| and run-length encoding.  We also looked
 briefly at the extension of this interface to support subsidiary
