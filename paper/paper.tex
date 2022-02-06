@@ -308,7 +308,7 @@ of \verb|Algf|.  This is an essential circularity, because we are
 trying to express that algebras take in \verb|fold| functions, which
 themselves may accept algebras.  The variable \verb|Alg| occurs
 negatively in \verb|FoldT Alg R| which occurs negatively in
-\verb|AlgF Alg X|.  Hence it occurs positively but not strictly
+\verb|AlgF Alg X|.  Hence it occurs positively in \verb|Algf|, though not strictly
 positively.  So we can indeed take a fixed-point of \verb|AlgF| to
 define the constant \verb|Alg|.
 
@@ -582,8 +582,7 @@ Definition wordsByr{R : Set}(fo:FoldT (Alg (ListF A)) R)
                    (p : A -> bool)(xs : R) : list (list A) :=
   fo (Const (list (list A))) (FunConst (list (list A))) (WordsByAlg p) xs.
 \end{minted}
-\caption{Functions  \texttt{wordsBy} and \texttt{wordsByr}, and the algebra they
-  fold (\texttt{WordsBy.v})}
+\caption{The algebra \texttt{WordsByAlg}, and functions \texttt{wordsBy} and \texttt{wordsByr} folding it (\texttt{WordsBy.v})}
 \label{fig:wordsby}
 \end{figure}
 
@@ -612,19 +611,19 @@ mapping (or ``mapping through'') takes in not just the current element
 wishes, upon which \verb|mapThrough| will then recurse.
 
 To write this combinator using our infrastructure for subsidiary
-recursion, we need to supply the mapped function with the fold
-function for \verb|mapThrough|'s recursion.  This is so that the
-mapped function can initiate a subsidiary recursion, returning a value
-in the abstract type \verb|R| of \verb|mapThrough|'s recursion.  
-The type we will use for mapped functions is:
+recursion, we will use this type for mapped functions:
 \begin{minted}{coq}
 Definition mappedT(A B : Set) : Set :=
   forall(R : Set)(fo:FoldT (Alg (ListF A)) R), A -> R -> B * R.
 \end{minted}
-\noindent This type is more informative than the Haskell type,
-since it shows that the second component of the returned value
-must have type \verb|R|, and hence must be (hereditarily) a tail
-of the input.
+\noindent This \verb|mappedT| type is more informative than the
+Haskell type, since it shows that the second component of the returned
+value must have type \verb|R|, and hence must be (hereditarily) a tail
+of the input.  We need to supply mapped functions with the fold
+function to use, which will come from \verb|mapThrough|'s recursion.
+Mapped functions need this to initiate subsidiary recursions,
+returning a value in the abstract type \verb|R| of \verb|mapThrough|'s
+recursion.
 
 Given this definition, the Coq definition of \verb|mapThrough| is shown in Figure~\ref{fig:mapthrough}.  
 \verb|MapThroughAlg| is similar to the
