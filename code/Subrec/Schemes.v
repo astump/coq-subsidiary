@@ -6,10 +6,10 @@ Require Import Subrec.
 
 Require Import Coq.Program.Basics.
 
-Variable F : Set -> Set.
-Context {FunF : Functor F}.
-
 Section Schemes .
+
+  Variable F : Set -> Set.
+  Context {FunF : Functor F}.
 
   Section CourseOfValues.
 
@@ -20,12 +20,12 @@ Section Schemes .
       forall (X : Set), MCVAlg X -> Subrec F -> X .
 
     Definition mcviter : MCVIter :=
-      fun X alg x => fold F _ _ (rollAlg (fun R re fo rec xs => alg R (out F fo) rec xs)) x .
+      fun X alg x => fold F _ _ (rollAlg (fun R fo rec xs => alg R (out F fo) rec xs)) x .
    
     Theorem MCVIterChar (X : Set) (alg : MCVAlg X) (xs : F (Subrec F)) :
       mcviter X alg (inn F xs) = alg _ (out F (fold F)) (mcviter _ alg) xs.
       change (mcviter X alg (inn F xs))
-        with (fold F _ _ (rollAlg (fun R re fo rec xs => alg R (out F fo) rec xs)) (inn F xs)) .
+        with (fold F _ _ (rollAlg (fun R fo rec xs => alg R (out F fo) rec xs)) (inn F xs)) .
       rewrite (FoldChar F) .
       reflexivity .
       apply FmapIdConst .
@@ -33,6 +33,7 @@ Section Schemes .
 
   End CourseOfValues .
 
+(* removing reveal from the algebra broke this:
   Section CofreeRecursiveComonad.
 
     Definition MRec{R : Set}(fo : FoldT (Alg F) R) : Set :=
@@ -80,5 +81,6 @@ Section Schemes .
     Qed .
 
   End CofreeRecursiveComonad .
+*)
 
 End Schemes .
