@@ -1,0 +1,211 @@
+Dear authors,
+
+The International Conference on Interactive Theorem Proving (ITP 2022) program committee regrets to inform you that your submission 1 was not accepted to appear at the conference.
+
+Of the 66 papers submitted, we have selected a high-quality program of 31 papers. The reviews for your paper are attached. We also hope you participate in this year's conference.  Details will be announced in the coming weeks.
+
+Best regards,
+June and Leo
+
+SUBMISSION: 1
+TITLE: Subsidiary Recursion in Coq
+
+
+----------------------- REVIEW 1 ---------------------
+SUBMISSION: 1
+TITLE: Subsidiary Recursion in Coq
+AUTHORS: Aaron Stump, Alex Hubers, Christopher Jenkins and Benjamin Delaware
+
+----------- Overall evaluation -----------
+SCORE: 1 (weak accept)
+----- TEXT:
+This describes a new class of recursion & induction schema in Coq, corresponding to subsidiary induction. This is implemented internally, without any extensions to Coq type's system, for a restricted set of recursive types. It is implemented inside of a library and demonstrated on a number of examples.
+
+Overall, it is nice to see support for this class of recursion, and it seems like it could be useful with more automation. Internal implementations are useful for really fleshing out the theory, and this paper does a fairly good job at that. The example from 3.4 makes a convincing case that this can be helpful for real, useful use cases. It looks like right now, this would be too painful to use still without a lot more automation, but I think the paper still makes enough of a contribution as is, and it would be a good step on the way to something more robust and usable. I'm weakly in favor of acceptance.
+
+A few concerns hold me back from stronger inclinations toward acceptance:
+
+1. It looks very difficult to interface this with existing types, especially when it comes to reusing functions and proofs already defined over the existing types. I would assume that one quickly runs into what the community often affectionately calls "transport hell," where one has to apply conversion functions everywhere in the right places. I'd love to see some discussion of how much effort goes into that interfacing right now, and of how to make it easier. I'd particularly love to see some automation for that.
+
+2. Generally, I think I would need more automation to feel comfortable using something like this. I think in practice I would find it very confusing to use, and I found myself a bit lost in even some of the simpler examples, despite having a lot of Coq expertise. A lot of what is needed looks like boilerplate that should be automatable, I think.
+
+3. The need for the impredicative-set flag is a bit hidden, and then discussed in detail only a bit later on page 11. I assume also this means that your induction principles only operate in Set, and you cannot do elimination into Type. This makes sense in retrospect, but when I think about elimination, my brain usually immediately goes to the most general kind in Type. I recommend being much more explicit about this early on.
+
+
+
+----------------------- REVIEW 2 ---------------------
+SUBMISSION: 1
+TITLE: Subsidiary Recursion in Coq
+AUTHORS: Aaron Stump, Alex Hubers, Christopher Jenkins and Benjamin Delaware
+
+----------- Overall evaluation -----------
+SCORE: -1 (weak reject)
+----- TEXT:
+Summary
+╌╌╌╌╌╌╌
+
+  This article presents an algebraic machinery for subsidiary recursion,
+  implemented in Coq.
+
+  Subsidiary recursion appears when recursive calls are performed on an
+  element which is not a structural subterm of an initial argument, but
+  may be obtained as a result of a helper function. Such recursive calls
+  cannot be directly written in ITPs like Coq. To bypass the issue, the
+  authors propose an approach based on a folded recursion over some
+  algebra.
+
+  The article presents the interface for this algebra, before giving
+  examples of its usage for subsidiary recursions over lists. It then
+  explains how the interface is actually implemented, in standard Coq
+  with Set impredicative. Finally, the authors explain how proofs can be
+  performed on objects defined this way by subsidiary induction.
+
+
+Evaluation
+╌╌╌╌╌╌╌╌╌╌
+
+  I find the idea beautiful and interesting. The accompanying code is
+  faithful to the article.
+
+  Unfortunately, I do not find the paper ready for acceptance.
+
+  First, the paper is really hard to understand for a non specialist.
+  Section 2, without any example, is quite indigestible. Examples come
+  in Section 3, but it is hard to make sense of all the details from
+  Section 2 when reading this section. I found it really frustrating
+  since I like the original idea.
+
+  In the related work section, I think that the comparison with
+  approaches that give an "evidence of well-foundness" should be
+  detailed more. Below is an implementation of `wordsBy` using the
+  `Program` interface and it appears to be quite straightforward. I
+  understand the difference in nature but I would like to see a few
+  words on how the approach proposed by the authors could be somehow
+  transparent to users as `Program` (for instance) is.
+
+  Finally, the source code could have been cleaned-up. For instance,
+  `Span.v` contains a Section variable `eqb` which is not used. Some
+  comments could have been removed, as well as the `Tree` folder.
+
+
+Detailed comments
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+  • l.77: "paramatrized"
+  • l.109: "The figure" -> Figure 2 (it has not been referenced before)
+  • l.354: "module"
+
+
+Complementary code
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+```
+Require Import Program List Psatz.
+
+Local Open Scope list_scope.
+
+Section Span.
+
+  Variable A : Type.
+
+  Section Span.
+    Variable p : A -> bool.
+
+    Fixpoint span (l:list A) : list A * list A :=
+      match l with
+      | nil => (nil, nil)
+      | x::xs => if p x then let (ys, zs) := span xs in (x::ys, zs) else (nil, l)
+      end.
+
+    Lemma span_snd_smaller (l:list A) :
+      Datatypes.length (snd (span l)) <= Datatypes.length l.
+    Proof.
+      induction l as [ |a l IHl]; auto.
+      simpl. case (p a); auto.
+      destruct (span l) as [ys zs]. simpl in *. lia.
+    Qed.
+  End Span.
+
+  Variable p : A -> bool.
+
+  Definition break := span (fun a => negb (p a)).
+
+  Program Fixpoint wordsBy (l:list A) {measure (Datatypes.length l)} : list (list A) :=
+    match l with
+    | nil => nil
+    | hd::tl =>
+        if p hd then
+          wordsBy tl
+        else
+          (hd::(fst (break tl)))::(wordsBy (snd (break tl)))
+    end.
+  Next Obligation.
+    simpl. now apply Lt.le_lt_n_Sm, span_snd_smaller.
+  Qed.
+
+End Span.
+
+Arguments wordsBy {A} p l.
+
+Eval compute in (wordsBy (Nat.eqb 0) (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: nil)).
+```
+
+
+
+----------------------- REVIEW 3 ---------------------
+SUBMISSION: 1
+TITLE: Subsidiary Recursion in Coq
+AUTHORS: Aaron Stump, Alex Hubers, Christopher Jenkins and Benjamin Delaware
+
+----------- Overall evaluation -----------
+SCORE: 1 (weak accept)
+----- TEXT:
+This paper presents a way to encode, in the Coq proof assistant,
+subsidiary recursion, i.e. recursion where a fixpoint can make a
+recursive call on a argument that is provably structurally smaller but
+not detected as such by Coq, as in:
+
+Fixpoint foo (s : seq bool) :=
+  if s is _ :: s then foo (behead s) else 0.
+
+The solution relies on an encoding of algebraic datatypes & their
+reduction principles in "algebras" than can be then folded over
+data. The main point of the paper is to make these algebras generic
+enough s.t. they support subsidiary recursion.
+
+The methodology is exemplified using a running example, whose final
+goal is the implementation of the RLE compression scheme.
+
+I have a mixed feeling about this paper.
+
+On one hand, the paper presents a very neat methodology that allows
+the standard Coq system to accept non-structurally decreasing
+fixpoints. Convincing Coq that such a fixpoint terminates can still be
+a painful task and the solution presented here seems to capture a
+common class of algorithms for which the termination argument is
+simple (the callee returns a value that is structurally smaller than
+my argument) but that is rejected by Coq.
+
+On the other hand, I failed seeing whether the proposed methodology is
+easier to use than more standard techniques, like using a fuel
+argument, especially for algorithms on lists where you can use the
+input list as fuel. Maybe use cases involving non-linear algebraic
+datatypes (e.g. trees - the repo. contains a embryo for the tree
+use-case) would have helped seeing all the benefits of the authors'
+framework. To what I see, the price to pay is quite high here: some
+definitions have to be twistted to make the system happy (e.g. SpanAlg
+in Fig.5) and the specifications are harder to state and
+prove. Moreover, the solution is kind of viral: the callee must be
+modified so that the caller can do subsidiary recursion via the former
+(e.g. `span` has to be heavily modified to be usable in `wordsBy`,
+although `span` is a standard fixpoint definition).
+
+It would have been interesting to see how such definitions are
+extracted.
+
+On the presentation side, the paper is very technical. Looking at the
+subject, this is not very surprising. However, starting from section
+5, I failed getting an intuition from the paper and had to play with
+the code to understand what was going on.
+
+Note: the repo. successfully compiles with the last version of Coq.
+

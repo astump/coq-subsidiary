@@ -40,6 +40,9 @@ Section WordsBy.
   Definition wordsBy(p : A -> bool)(xs : List A) : list (list A) :=
     wordsByr (fold (ListF A)) p xs.
 
+  Definition wordsByl(p : A -> bool)(xs : list A) : list (list A) :=
+    wordsBy p (toList xs).
+
   Definition wordsByThmT(p : A -> bool)(xs : List A) : Prop := Forall (Forallb (fun x => negb (p x))) (wordsBy p xs).
 
   Theorem wordsByThm(p : A -> bool)(xs : list A) : wordsByThmT p (toList xs).  
@@ -61,14 +64,20 @@ Qed.
 
 End WordsBy.
 
-Arguments wordsByr{A}{R}fo p xs.
-Arguments wordsBy{A} p xs.
+Arguments wordsByr{A}{R}.
+Arguments wordsBy{A}.
+Arguments wordsByl{A}.
 
 (* testcases *)
 
+(*
 (* 0 will play the role of a space *)
 Definition test := wordsBy (eqb 0) (toList (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: [])).
 
 Eval compute in test.
 
+Definition t1 := repeat 0 1000.
 
+Eval compute in (wordsBy (eqb 0) (toList (t1 ++ 1 :: 1 :: 2 :: (t1 ++ 1 :: 3 :: 5 :: 0 :: nil)))).
+
+*)

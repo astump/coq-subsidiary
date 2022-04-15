@@ -21,6 +21,7 @@ List/SpanPfs/Forall.v
 List/SpanPfs/GuardPres.v
 List/SplitAt.v
 List/WordsBy.v
+List/WordsByWf.v
 List/ChunksOf.v
 List/Rle.v
 List/RleSingleRec.v

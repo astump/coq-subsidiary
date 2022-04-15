@@ -1,5 +1,5 @@
 all: clean Makefile.coq
-	+make -f Makefile.coq all
+	+make -f Makefile.coq VERBOSE=true all
 
 Makefile.coq: _CoqProject Makefile
 	coq_makefile -f _CoqProject -o Makefile.coq
