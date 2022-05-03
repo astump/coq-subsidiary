@@ -52,35 +52,48 @@ Fixpoint swap (n m : nat) (l : list nat) : list nat :=
   | _ => nil
   end.
 
+Ltac split_if :=
+  repeat
+    match goal with
+    | |- context[Nat.eqb ?n ?n] =>
+        rewrite (PeanoNat.Nat.eqb_refl n); simpl
+    | |- context[Nat.eqb ?m ?n] =>
+        let Heqb := fresh in
+        destruct (Nat.eqb m n) eqn: Heqb; simpl;
+        [ apply EqNat.beq_nat_true in Heqb;
+          subst; simpl;
+          try congruence
+        | apply EqNat.beq_nat_false in Heqb;
+          try congruence ]
+    | H : context[Nat.eqb ?m ?n] |- _ =>
+        let Heqb := fresh in
+        destruct (Nat.eqb m n) eqn: Heqb; simpl;
+        [ apply EqNat.beq_nat_true in Heqb;
+          subst; simpl;
+          try congruence
+        | apply EqNat.beq_nat_false in Heqb;
+          try congruence ]
+  end.
+
 Lemma swap_id : forall (n : nat) (l : list nat),
     swap n n l = l.
 Proof.
-  induction l; simpl; eauto.
-  destruct (Nat.eqb n a) eqn: ?; try congruence.
-  apply EqNat.beq_nat_true in Heqb; subst; congruence.
+  induction l; simpl; eauto; split_if.
 Qed.
 
 Lemma swap_break :
   forall n m l,
-    Nat.eqb n m = false ->
+    n <> m ->
     fst (break nat (Nat.eqb n) l) = swap m n (fst (break nat (Nat.eqb m) (swap n m l))).
 Proof.
   induction l; simpl; eauto; intros.
-  destruct (Nat.eqb n a) eqn: ?; simpl.
-  - rewrite PeanoNat.Nat.eqb_refl; simpl; reflexivity.
-  - destruct (Nat.eqb m a) eqn: ?; simpl.
-     rewrite PeanoNat.Nat.eqb_sym, H; simpl.
-     destruct (break nat (Nat.eqb n) l); simpl in *.
+  split_if; eauto.
+  -  destruct (break nat (Nat.eqb n) l); simpl in *.
      rewrite IHl; eauto.
-     destruct (break nat (Nat.eqb m) (swap n m l)); simpl.
-     rewrite PeanoNat.Nat.eqb_sym, H; simpl.
-     rewrite PeanoNat.Nat.eqb_refl; simpl.
-     eapply EqNat.beq_nat_true in Heqb0; subst; eauto.
-     rewrite Heqb0; simpl.
-     destruct (break nat (Nat.eqb n) l); simpl.
-     simpl in *; rewrite IHl; eauto.
-     destruct (break nat (Nat.eqb m) (swap n m l)); simpl.
-     rewrite Heqb0, Heqb; eauto.
+     destruct (break nat (Nat.eqb a) (swap n a l)); simpl; split_if.
+  - destruct (break nat (Nat.eqb n) l); simpl.
+    simpl in *; rewrite IHl; eauto.
+    destruct (break nat (Nat.eqb m) (swap n m l)); simpl; split_if.
 Qed.
 
 Lemma swap_break_snd :
@@ -90,19 +103,13 @@ Lemma swap_break_snd :
 Proof.
   induction l; simpl.
   - reflexivity.
-  - destruct (Nat.eqb n a) eqn: ?; simpl; intros.
-    + rewrite Heqb, PeanoNat.Nat.eqb_refl; simpl.
-      reflexivity.
-    + destruct (Nat.eqb m a) eqn: ?; simpl.
-      * destruct (Nat.eqb m n) eqn: ?; simpl.
-        -- eapply EqNat.beq_nat_true in Heqb1; congruence.
-        -- destruct (break nat (Nat.eqb n) l); simpl in *.
-           rewrite IHl by eauto.
-           destruct (break nat (Nat.eqb m) (swap n m l)); reflexivity.
-      * rewrite Heqb0; simpl.
-        destruct (break nat (Nat.eqb n) l); simpl in *.
-        rewrite IHl by eauto.
-        destruct (break nat (Nat.eqb m) (swap n m l)); reflexivity.
+  - intros; split_if; eauto.
+    + destruct (break nat (Nat.eqb n) l); simpl in *.
+      rewrite IHl by eauto.
+      destruct (break nat (Nat.eqb a) (swap n a l)); reflexivity.
+    + destruct (break nat (Nat.eqb n) l); simpl in *.
+      rewrite IHl by eauto.
+      destruct (break nat (Nat.eqb m) (swap n m l)); reflexivity.
 Qed.
 
 Lemma wordsBy_swap : forall n m l,
@@ -115,50 +122,35 @@ Proof.
   - destruct l; intros; try reflexivity.
     simpl in H; lia.
   - destruct l; intros; try reflexivity.
-    unfold wordsBy; simpl.
-    rewrite WfExtensionality.fix_sub_eq_ext; simpl.
-    destruct (Nat.eqb n n0) eqn: ?.
-    + fold (wordsBy (Nat.eqb n) l).
-      rewrite WfExtensionality.fix_sub_eq_ext; simpl.
-      rewrite PeanoNat.Nat.eqb_refl.
-      rewrite IHbnd; try reflexivity.
-      simpl in H; lia.
-    + destruct (Nat.eqb m n0) eqn: ?.
-      * symmetry.
+    (* Is there a better way to simplify wordsBy than unfolding / rewriting / folding? *)
+    unfold wordsBy at 1; simpl.
+    rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+    + fold (wordsBy (Nat.eqb n0) l).
+      (* We also have to do this to simplify the occurence of wordsBy on the righthand side: *)
+      unfold wordsBy at 2;
+        rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+      simpl in *; rewrite IHbnd by lia; try reflexivity.
+    + fold (wordsBy (Nat.eqb n) (snd (break nat (Nat.eqb n) l))).
+      (* We again have to do this to simplify the occurence of wordsBy on the righthand side: *)
+      unfold wordsBy at 2;
         rewrite WfExtensionality.fix_sub_eq_ext; simpl.
-        symmetry.
-        destruct (Nat.eqb m n) eqn: ?.
-        -- eapply EqNat.beq_nat_false in Heqb.
-           eapply EqNat.beq_nat_true in Heqb0.
-           eapply EqNat.beq_nat_true in Heqb1.
-           congruence.
-        -- simpl; rewrite Heqb1, PeanoNat.Nat.eqb_refl.
-           simpl; eapply EqNat.beq_nat_true in Heqb0; subst.
-           repeat f_equal.
-           ++ eapply swap_break; eauto.
-           ++ simpl in *.
-              fold (wordsBy (Nat.eqb n) (snd (break nat (Nat.eqb n) l))).
-              fold (wordsBy (Nat.eqb n0) (snd (break nat (Nat.eqb n0) (swap n n0 l)))).
-              rewrite IHbnd by (etransitivity; [eapply span_snd_smaller | lia]).
-              eapply EqNat.beq_nat_false in Heqb.
-              rewrite swap_break_snd; eauto.
-      * symmetry; rewrite WfExtensionality.fix_sub_eq_ext; simpl; symmetry.
-        rewrite Heqb0; simpl.
-        rewrite Heqb0; simpl.
-        rewrite Heqb; simpl.
-        repeat f_equal.
-        -- destruct (Nat.eqb n m) eqn: ?.
-           ++ eapply EqNat.beq_nat_true in Heqb1; subst.
-              rewrite !swap_id; reflexivity.
-           ++ eapply swap_break; eauto.
-        -- simpl in *.
-             fold (wordsBy (Nat.eqb n) (snd (break nat (Nat.eqb n) l))).
-             rewrite IHbnd by (etransitivity; [eapply span_snd_smaller | lia]).
-             unfold wordsBy; repeat f_equal.
-             destruct (Nat.eqb n m) eqn: ?.
-           ++ eapply EqNat.beq_nat_true in Heqb1; subst.
-              rewrite !swap_id; reflexivity.
-           ++ rewrite swap_break_snd; eauto using EqNat.beq_nat_false.
+      fold (wordsBy (Nat.eqb n0) (snd (break nat (Nat.eqb n0) (swap n n0 l)))).
+      split_if.
+      repeat f_equal.
+      * eapply swap_break; eauto.
+      * rewrite IHbnd by (etransitivity; [eapply span_snd_smaller | simpl in *; lia]).
+        rewrite swap_break_snd by eauto; reflexivity.
+    + fold (wordsBy (Nat.eqb n) (snd (break nat (Nat.eqb n) l))).
+      (* And one last time: *)
+      unfold wordsBy at 2;
+        rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+      fold (wordsBy (Nat.eqb m) (snd (break nat (Nat.eqb m) (swap n m l)))).
+      rewrite IHbnd by (etransitivity; [eapply span_snd_smaller | simpl in *; lia]).
+      destruct (Nat.eqb n m) eqn: Heqb ;
+        [eapply EqNat.beq_nat_true in Heqb; subst
+        | eapply EqNat.beq_nat_false in Heqb].
+      * rewrite !swap_id; eauto.
+      * erewrite swap_break, swap_break_snd; eauto.
   - eapply H; eauto.
 Qed.
 
