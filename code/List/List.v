@@ -1,17 +1,19 @@
-
 Require Import Subrec.
 Require Import Subreci.
 Require Import Kinds.
 Require Import Functors.
 Require Import Mu.
 
-Require Import Coq.Lists.List.
-Require Import Coq.Init.Nat.
+From Coq Require Import List.
+(* This is our library for generating definitions via Ltac: *)
+(* From idt Require Import all. *)
+From Coq Require Import Nat.
 
 Import ListNotations.
 
 Section List.
-  Variable A : Set. 
+
+  Variable A : Set.
 
   (* -------------------------------------------------------------------------------- *)
   (* List Functor *)
@@ -62,7 +64,7 @@ Section List.
       | [] => Nil
       | (hd :: tl) => Cons hd tl
       end.
-  
+
   Definition List := Subrec ListF .
 
   (* -------------------------------------------------------------------------------- *)
@@ -81,8 +83,8 @@ Section List.
   Lemma nilCons : forall(h:A)(t:List), mkNil = mkCons h t -> False.
     intros h t u.
     assert (c : outList mkNil = outList (mkCons h t)).
-    + rewrite u; reflexivity.    
-    + discriminate c.    
+    + rewrite u; reflexivity.
+    + discriminate c.
   Qed.
 
   Lemma consCons : forall(h1 h2 : A)(t1 t2 : List),
@@ -127,7 +129,7 @@ Section List.
       rewrite IHxs.
       reflexivity.
   Qed.
-        
+
   (* -------------------------------------------------------------------------------- *)
   (* Some basic list operations *)
   (* -------------------------------------------------------------------------------- *)
@@ -152,7 +154,7 @@ Section List.
             ).
   Definition append (xs ys : List) : List :=
     fold ListF _ _ appendAlg xs ys.
-  
+
   Definition getNilAlg(R : Set) : Alg ListF option :=
     rollAlg (fun _ _ rec xs =>
                match xs with
@@ -172,13 +174,13 @@ Section List.
       None => xs
     | Some q => q
     end.
-    
+
 
 
   (* -------------------------------------------------------------------------------- *)
   (* Dependent stuff *)
   (* -------------------------------------------------------------------------------- *)
-      
+
   Definition lkMo := List -> Prop.
   Inductive ListFi(R : lkMo) : lkMo :=
     nilFi : ListFi R mkNil
