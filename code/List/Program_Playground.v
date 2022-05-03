@@ -44,6 +44,19 @@ End Span.
 
 Arguments wordsBy {A} p l.
 
+Eval compute in (wordsBy (Nat.eqb 0) (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: nil)).
+
+Eval compute in (wordsBy (Nat.eqb 0) (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: nil)).
+
+(* Here is a simple example of how using Program complicates reduction
+   in *proofs* as well.  We'll prove that (more or less) if we
+   consistently update the element used to split a list, it won't
+   effect the behavior of [wordsBy]: *)
+
+(* Lemma wordsBy_swap : forall n m l,
+    wordsBy (Nat.eqb n) l = map (swap m n) (wordsBy (Nat.eqb m) (swap n m l)).
+    Proof.  *)
+
 Fixpoint swap (n m : nat) (l : list nat) : list nat :=
   match l with
   | a :: l' => (if Nat.eqb n a then m
@@ -116,6 +129,8 @@ Lemma wordsBy_swap : forall n m l,
     wordsBy (Nat.eqb n) l = map (swap m n) (wordsBy (Nat.eqb m) (swap n m l)).
 Proof.
   intros.
+  (* Note that we have to strengthen our proof statement so that we
+     can do strong induction over the input list. *)
   assert (forall bnd l, length l <= bnd ->
                      wordsBy (Nat.eqb n) l = map (swap m n) (wordsBy (Nat.eqb m) (swap n m l))).
   clear; induction bnd.
@@ -153,7 +168,3 @@ Proof.
       * erewrite swap_break, swap_break_snd; eauto.
   - eapply H; eauto.
 Qed.
-
-Eval compute in (wordsBy (Nat.eqb 0) (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: nil)).
-
-Eval compute in (wordsBy (Nat.eqb 0) (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 0 :: nil)).
