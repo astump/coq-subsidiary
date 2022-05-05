@@ -228,3 +228,28 @@ Proof.
       * generalize (span_snd_smaller _ (fun a : nat => negb (Nat.eqb n a)) l);
           unfold break; simpl; intros; lia.
 Qed.
+
+From Coq Require Vector.
+
+Section DefEqPlayground.
+
+  Program Fixpoint add' (n m : nat) {measure n} : nat :=
+    match n with
+    | S n' => S (add' n' m)
+    | 0 => m
+    end.
+
+  Eval simpl in (fun n (v : Vector.t nat (1 + n)) => Vector.hd v).
+  Eval simpl in (fun m n (v : Vector.t nat (plus (plus 100 m) n)) => Vector.hd v).
+  Eval cbv in (fun m n (v : Vector.t nat (add' 10 m)) => Vector.hd v).
+  Eval compute in (fun m n (v : Vector.t nat (add' 10 m)) => Vector.hd v).
+
+  (* Example of how add' does not play nice with simpl. *)
+  Lemma Timeout : forall (m : nat) (v : Vector.t nat (add' 10 m)), Vector.hd v = Vector.hd v.
+    intros.
+    (* [simpl] does not terminate on my machine in under 60s. *)
+    Fail Timeout 1 (*replace with your favorite bound, e.g., 60 *) simpl.
+    reflexivity.
+  Qed.
+
+End DefEqPlayground.
