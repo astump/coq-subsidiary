@@ -135,7 +135,8 @@ Proof.
   (* - strong induction over the length of the input list OR
      - use the well_founded_induction. *)
   (* We will pursure the first approach here, then use the second
-     approach in the following [wordsBy_swap'] lemma.*)
+     approach in the following [wordsBy_swap'] lemma. *)
+
   assert (forall bnd l, length l <= bnd ->
                      wordsBy (Nat.eqb n) l = map (swap m n) (wordsBy (Nat.eqb m) (swap n m l))).
   clear; induction bnd.
@@ -149,6 +150,9 @@ Proof.
       (* We also have to do this to simplify the occurence of wordsBy on the righthand side: *)
       unfold wordsBy at 2;
         rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+      (* Note that in order to use the induction hypothesis, we have
+         to prove that the recursive application is to a 'smaller'
+         term. *)
       simpl in *; rewrite IHbnd by lia; try reflexivity.
     + fold (wordsBy (Nat.eqb n) (snd (break nat (Nat.eqb n) l))).
       (* We again have to do this to simplify the occurence of wordsBy on the righthand side: *)
@@ -174,8 +178,8 @@ Proof.
   - eapply H; eauto.
 Qed.
 
-(* Here's the promised alternative proof using
-   well_founded_induction.*)
+(* Here's the promised alternative proof using well founded
+   induction.*)
 
 Lemma wordsBy_swap' : forall n m l,
     wordsBy (Nat.eqb n) l = map (swap m n) (wordsBy (Nat.eqb m) (swap n m l)).
@@ -205,7 +209,9 @@ Proof.
       split_if.
       repeat f_equal.
       * eapply swap_break; eauto.
-      * rewrite H, swap_break_snd; eauto.
+      * (* Again, we cannot get away from needing to prove that the
+         recursive application is to a 'smaller' term. *)
+        rewrite H, swap_break_snd; eauto.
         generalize (span_snd_smaller _ (fun a : nat => negb (Nat.eqb n a)) l);
           unfold break; simpl; intros; lia.
     + fold (wordsBy (Nat.eqb n) (snd (break nat (Nat.eqb n) l))).
