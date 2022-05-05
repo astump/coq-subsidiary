@@ -129,8 +129,13 @@ Lemma wordsBy_swap : forall n m l,
     wordsBy (Nat.eqb n) l = map (swap m n) (wordsBy (Nat.eqb m) (swap n m l)).
 Proof.
   intros.
-  (* Note that we have to strengthen our proof statement so that we
-     can do strong induction over the input list. *)
+  (* Note that we cannot do induction directly over l, and thus need
+     to prove a stronger statement. We have two (morally equivalent)
+     choices: *)
+  (* - strong induction over the length of the input list OR
+     - use the well_founded_induction. *)
+  (* We will pursure the first approach here, then use the second
+     approach in the following [wordsBy_swap'] lemma.*)
   assert (forall bnd l, length l <= bnd ->
                      wordsBy (Nat.eqb n) l = map (swap m n) (wordsBy (Nat.eqb m) (swap n m l))).
   clear; induction bnd.
@@ -167,4 +172,53 @@ Proof.
       * rewrite !swap_id; eauto.
       * erewrite swap_break, swap_break_snd; eauto.
   - eapply H; eauto.
+Qed.
+
+(* Here's the promised alternative proof using
+   well_founded_induction.*)
+
+Lemma wordsBy_swap' : forall n m l,
+    wordsBy (Nat.eqb n) l = map (swap m n) (wordsBy (Nat.eqb m) (swap n m l)).
+Proof.
+  intros.
+  pattern l.
+  eapply well_founded_induction with (R := fun l l' => length l < length l').
+  - (* We need an auxiliary lemma that less than on measures
+       (functions from a type to [nat], is well_founded. Such a proof would
+       would need to be manually supplied for more exotic relations. *)
+    eapply Wf_nat.well_founded_ltof.
+  - intros.
+    clear l; destruct x as [ | n0 l ]; intros; try reflexivity.
+    (* Is there a better way to simplify wordsBy than unfolding / rewriting / folding? *)
+    unfold wordsBy at 1; simpl.
+    rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+    + fold (wordsBy (Nat.eqb n0) l).
+      (* We also have to do this to simplify the occurence of wordsBy on the righthand side: *)
+      unfold wordsBy at 2;
+        rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+      simpl in *; rewrite H by lia; try reflexivity.
+    + fold (wordsBy (Nat.eqb n) (snd (break nat (Nat.eqb n) l))).
+      (* We again have to do this to simplify the occurence of wordsBy on the righthand side: *)
+      unfold wordsBy at 2;
+        rewrite WfExtensionality.fix_sub_eq_ext; simpl.
+      fold (wordsBy (Nat.eqb n0) (snd (break nat (Nat.eqb n0) (swap n n0 l)))).
+      split_if.
+      repeat f_equal.
+      * eapply swap_break; eauto.
+      * rewrite H, swap_break_snd; eauto.
+        generalize (span_snd_smaller _ (fun a : nat => negb (Nat.eqb n a)) l);
+          unfold break; simpl; intros; lia.
+    + fold (wordsBy (Nat.eqb n) (snd (break nat (Nat.eqb n) l))).
+      (* And one last time: *)
+      unfold wordsBy at 2;
+        rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+      fold (wordsBy (Nat.eqb m) (snd (break nat (Nat.eqb m) (swap n m l)))).
+      rewrite H.
+      * destruct (Nat.eqb n m) eqn: Heqb ;
+          [eapply EqNat.beq_nat_true in Heqb; subst
+          | eapply EqNat.beq_nat_false in Heqb].
+        -- rewrite !swap_id; eauto.
+        -- erewrite swap_break, swap_break_snd; eauto.
+      * generalize (span_snd_smaller _ (fun a : nat => negb (Nat.eqb n a)) l);
+          unfold break; simpl; intros; lia.
 Qed.
