@@ -43,12 +43,13 @@ Section WordsBy.
   Definition wordsByl(p : A -> bool)(xs : list A) : list (list A) :=
     wordsBy p (toList xs).
 
-  Definition wordsByThmT(p : A -> bool)(xs : List A) : Prop := Forall (Forallb (fun x => negb (p x))) (wordsBy p xs).
+  Definition wordsByOutputsNegT(p : A -> bool)(xs : List A) : Prop :=
+    Forall (Forallb (fun x => negb (p x))) (wordsBy p xs).
 
-  Theorem wordsByThm(p : A -> bool)(xs : list A) : wordsByThmT p (toList xs).  
-  listInd (fun (X : List A -> Prop) => wordsByThmT p) xs.
+  Theorem wordsByOutputsNeg(p : A -> bool)(xs : list A) : wordsByOutputsNegT p (toList xs).  
+  listInd (fun (X : List A -> Prop) => wordsByOutputsNegT p) xs.
   + apply Forall_nil.
-  + unfold wordsByThmT.
+  + unfold wordsByOutputsNegT.
     simpl'.
     change (fold (ListF A) (Const (list (list A))) (FunConst (list (list A))) (WordsByAlg p) t) with (wordsBy p t).
     destruct (p h) eqn:e.
@@ -61,6 +62,18 @@ Section WordsBy.
        +++ apply ih.
            exact (guardPres fo (fun x : A => negb (p x)) t H e').
 Qed.
+
+  Theorem wordsByInputNegT(p : A -> bool)(xs : list A) :
+    Forallb p xs ->
+    wordsBy p (toList xs) = nil.
+    induction xs; intro H.
+    - simpl'; trivial.
+    - simpl'.
+      inversion H.
+      destruct (p a) eqn:e.
+      -- exact (IHxs H3).
+      -- discriminate H2.
+   Qed.
 
 End WordsBy.
 
