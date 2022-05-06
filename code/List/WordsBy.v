@@ -63,7 +63,7 @@ Section WordsBy.
            exact (guardPres fo (fun x : A => negb (p x)) t H e').
 Qed.
 
-  Theorem wordsByInputNegT(p : A -> bool)(xs : list A) :
+  Theorem wordsByInputNeg(p : A -> bool)(xs : list A) :
     Forallb p xs ->
     wordsBy p (toList xs) = nil.
     induction xs; intro H.
