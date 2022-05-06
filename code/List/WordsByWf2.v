@@ -138,7 +138,9 @@ Section Span.
 
   Definition break := span (fun a => negb (p a)).
 
-  Program Fixpoint wordsByWf (l:list A) {measure (toBnat (Datatypes.length l)) BnatLt} : list (list A) :=
+  Definition listBnatLt(l1 l2 : list A) : Prop := BnatLt (toBnat (Datatypes.length l1)) (toBnat (Datatypes.length l2)).
+
+  Program Fixpoint wordsByWf (l:list A) {measure l listBnatLt} : list (list A) :=
     match l with
     | nil => nil
     | hd::tl =>
@@ -165,8 +167,9 @@ Eval compute in (wordsByWf (Nat.eqb 0) (0 :: 1 :: 1 :: 2 :: 0 :: 1 :: 3 :: 5 :: 
 
 Definition t1 := repeat 0 1000.
 
+(* blows the stack:
 Eval compute in (wordsByWf (Nat.eqb 0) (t1 ++ 1 :: 1 :: 2 :: (t1 ++ 1 :: 3 :: 5 :: 0 :: nil))).
-
+*)
 
 (*
 Print wordsByWf.

@@ -41,6 +41,8 @@ Section Span.
     simpl. now apply Lt.le_lt_n_Sm, span_snd_smaller.
   Defined.
 
+  Print wordsByWf_obligation_3.
+
 End Span.
 
 Arguments wordsByWf {A} p l.
