@@ -239,6 +239,50 @@ Section DefEqPlayground.
     | 0 => m
     end.
 
+  Lemma add'_commute : forall (n m : nat), add' n m = add' m n.
+  Proof.
+    induction n; simpl; intros.
+    - unfold add' at 1; simpl.
+      unfold add'_func.
+      rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+      induction m; simpl.
+      + reflexivity.
+      + unfold add' at 1; simpl.
+        unfold add'_func.
+        rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+        rewrite IHm at 1.
+        reflexivity.
+    - unfold add' at 1; simpl.
+      unfold add'_func.
+      rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+      fold (add' m n).
+      match goal with
+        |- S ?x = _ => replace x with (add' n m) by reflexivity
+      end.
+      rewrite IHn.
+      induction m; simpl.
+      + reflexivity.
+      + unfold add'; simpl.
+        unfold add'_func.
+        rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+        symmetry; rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+        unfold add', add'_func in IHm.
+        rewrite IHm.
+        reflexivity.
+  Qed.
+
+  (* For comparison: *)
+  Lemma add_commute : forall (n m : nat), n + m = m + n.
+  Proof.
+    induction n; simpl; intros.
+    - induction m; simpl.
+      + reflexivity.
+      + rewrite <- IHm; reflexivity.
+    - rewrite IHn; induction m; simpl.
+      + reflexivity.
+      + rewrite IHm; reflexivity.
+  Qed.
+
   Eval simpl in (fun n (v : Vector.t nat (1 + n)) => Vector.hd v).
   Eval simpl in (fun m n (v : Vector.t nat (plus (plus 100 m) n)) => Vector.hd v).
   Eval cbv in (fun m n (v : Vector.t nat (add' 10 m)) => Vector.hd v).
