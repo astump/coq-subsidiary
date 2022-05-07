@@ -2,3 +2,5 @@
 
 SmallerListWf.v
 AppendWfRec.v
+WordsByPath.v
+WordsByITPReview.v
