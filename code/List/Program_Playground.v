@@ -60,14 +60,15 @@ Lemma swap_break :
     n <> m ->
     fst (break nat (Nat.eqb n) l) = swap m n (fst (break nat (Nat.eqb m) (swap n m l))).
 Proof.
-  induction l; simpl; eauto; intros.
+  induction l; simpl; unfold swap_elt; eauto; intros.
   split_if; eauto.
   -  destruct (break nat (Nat.eqb n) l); simpl in *.
      rewrite IHl; eauto.
-     destruct (break nat (Nat.eqb a) (swap n a l)); simpl; split_if.
+     destruct (break nat (Nat.eqb a) (swap n a l)); simpl; unfold swap_elt; split_if.
   - destruct (break nat (Nat.eqb n) l); simpl.
     simpl in *; rewrite IHl; eauto.
     destruct (break nat (Nat.eqb m) (swap n m l)); simpl; split_if.
+    unfold swap_elt; split_if.
 Qed.
 
 Lemma swap_break_snd :
@@ -75,9 +76,10 @@ Lemma swap_break_snd :
     n <> m ->
     swap n m (snd (break nat (Nat.eqb n) l)) = snd (break nat (Nat.eqb m) (swap n m l)).
 Proof.
-  induction l; simpl.
+  induction l; simpl; unfold swap_elt.
   - reflexivity.
-  - intros; split_if; eauto.
+  - intros; split_if; eauto; unfold swap_elt.
+    + split_if; reflexivity.
     + destruct (break nat (Nat.eqb n) l); simpl in *.
       rewrite IHl by eauto.
       destruct (break nat (Nat.eqb a) (swap n a l)); reflexivity.
@@ -106,7 +108,7 @@ Proof.
   - destruct l; intros; try reflexivity.
     (* Is there a better way to simplify wordsBy than unfolding / rewriting / folding? *)
     unfold wordsBy at 1; simpl.
-    rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+    rewrite WfExtensionality.fix_sub_eq_ext; simpl; unfold swap_elt; split_if.
     + fold (wordsBy (Nat.eqb n0) l).
       (* We also have to do this to simplify the occurence of wordsBy on the righthand side: *)
       unfold wordsBy at 2;
@@ -122,6 +124,7 @@ Proof.
       fold (wordsBy (Nat.eqb n0) (snd (break nat (Nat.eqb n0) (swap n n0 l)))).
       split_if.
       repeat f_equal.
+      * unfold swap_elt; split_if.
       * eapply swap_break; eauto.
       * rewrite IHbnd by (etransitivity; [eapply span_snd_smaller | simpl in *; lia]).
         rewrite swap_break_snd by eauto; reflexivity.
@@ -134,8 +137,9 @@ Proof.
       destruct (Nat.eqb n m) eqn: Heqb ;
         [eapply EqNat.beq_nat_true in Heqb; subst
         | eapply EqNat.beq_nat_false in Heqb].
-      * rewrite !swap_id; eauto.
-      * erewrite swap_break, swap_break_snd; eauto.
+      * rewrite swap_elt_id; rewrite !swap_id; eauto.
+      * unfold swap_elt; erewrite swap_break, swap_break_snd; eauto.
+        split_if.
   - eapply H; eauto.
 Qed.
 
@@ -156,7 +160,7 @@ Proof.
     clear l; destruct x as [ | n0 l ]; intros; try reflexivity.
     (* Is there a better way to simplify wordsBy than unfolding / rewriting / folding? *)
     unfold wordsBy at 1; simpl.
-    rewrite WfExtensionality.fix_sub_eq_ext; simpl; split_if.
+    rewrite WfExtensionality.fix_sub_eq_ext; simpl; unfold swap_elt; split_if.
     + fold (wordsBy (Nat.eqb n0) l).
       (* We also have to do this to simplify the occurence of wordsBy on the righthand side: *)
       unfold wordsBy at 2;
@@ -169,6 +173,7 @@ Proof.
       fold (wordsBy (Nat.eqb n0) (snd (break nat (Nat.eqb n0) (swap n n0 l)))).
       split_if.
       repeat f_equal.
+      * unfold swap_elt; split_if.
       * eapply swap_break; eauto.
       * (* Again, we cannot get away from needing to prove that the
          recursive application is to a 'smaller' term. *)
@@ -184,8 +189,9 @@ Proof.
       * destruct (Nat.eqb n m) eqn: Heqb ;
           [eapply EqNat.beq_nat_true in Heqb; subst
           | eapply EqNat.beq_nat_false in Heqb].
-        -- rewrite !swap_id; eauto.
+        -- rewrite swap_elt_id; rewrite !swap_id; eauto.
         -- erewrite swap_break, swap_break_snd; eauto.
+           unfold swap_elt; split_if.
       * generalize (span_snd_smaller _ (fun a : nat => negb (Nat.eqb n a)) l);
           unfold break; simpl; intros; lia.
 Qed.
