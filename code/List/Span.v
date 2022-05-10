@@ -30,6 +30,11 @@ Section Span.
        end
     }.
   
+  Lemma SpanFunctorId : FmapId SpanF SpanFunctor.
+    intros B d.
+    destruct d; trivial.
+  Qed.
+
   Definition SpanAlg(p : A -> bool)
     : Alg (ListF A) SpanF :=
     rollAlg 
