@@ -1,6 +1,7 @@
 Require Import Program List Psatz.
 Require Import Lists.List.
 Require Import Swap.
+Require Import ExtraLib.
 Local Open Scope list_scope.
 
 Section Span.
@@ -194,6 +195,23 @@ Proof.
            unfold swap_elt; split_if.
       * generalize (span_snd_smaller _ (fun a : nat => negb (Nat.eqb n a)) l);
           unfold break; simpl; intros; lia.
+Qed.
+
+(* proof is easy and can be done by induction on xs.  The intermediate
+   goals are quite huge, though, because Program changes the form of
+   the code (a lot). *)
+Theorem wordsByInputNeg(A : Set)(p : A -> bool)(xs : list A) :
+  Forallb p xs ->
+  wordsBy p xs = nil.
+induction xs; intro u.
+- reflexivity.
+- unfold wordsBy; simpl.
+  rewrite WfExtensionality.fix_sub_eq_ext; simpl.
+  inversion u.
+  rewrite H1.
+  unfold wordsBy in IHxs.
+  rewrite (IHxs H2).
+  reflexivity.
 Qed.
 
 From Coq Require Vector.
