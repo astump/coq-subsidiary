@@ -12,6 +12,8 @@ Require Import ExtraLib.
 Require Import Span.
 Require Import SpanPfs.Forall.
 Require Import SpanPfs.GuardPres.
+Require Import SpanPfs.SwapBreak.
+Require Import Swap.
 
 Import ListNotations.
 
@@ -80,6 +82,31 @@ End WordsBy.
 Arguments wordsByr{A}{R}.
 Arguments wordsBy{A}.
 Arguments wordsByl{A}.
+
+Definition wordsBySwapT(X : List nat -> Prop)(l : List nat) : Prop :=
+  forall (n m : nat),
+      wordsBy (Nat.eqb n) l = map (swap m n) (wordsBy (Nat.eqb m) (swapL n m l)).
+
+Ltac foldWordsBy :=
+  match goal with
+  | |- context[fold (ListF nat) (Const (list (list nat))) (FunConst (list (list nat))) (WordsByAlg nat ?p) ?t] =>
+    change (fold (ListF nat) (Const (list (list nat))) (FunConst (list (list nat))) (WordsByAlg nat p) t) with
+        (wordsBy p t)
+  end.
+
+Theorem wordsBySwap(n m : nat)(xs : list nat) : wordsBySwapT (fun X => True) (toList xs).
+  listInd wordsBySwapT xs; unfold wordsBySwapT; intros; simpl'.
+  - trivial.
+  - split_if.
+    -- set (i := ih t H); unfold wordsBySwapT in i.
+       foldWordsBy.
+       rewrite (i h m0).
+       reflexivity.
+    -- unfold swap_elt in H0; split_if.
+    -- assert (Q : m0 = h).
+       --- unfold swap_elt in H1; split_if.
+       --- rewrite Q.
+Admitted. (* not done yet *)
 
 (* testcases *)
 

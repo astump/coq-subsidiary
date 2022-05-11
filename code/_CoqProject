@@ -19,6 +19,7 @@ List/Span.v
 List/SpanPfs/Append.v
 List/SpanPfs/Forall.v
 List/SpanPfs/GuardPres.v
+List/SpanPfs/SwapBreak.v
 List/SplitAt.v
 List/WordsBy.v
 List/WordsByWf.v
